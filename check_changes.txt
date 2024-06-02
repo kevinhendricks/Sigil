@@ -1,0 +1,3083 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 95ce97354..1babcbf11 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -29,11 +29,8 @@ else()
+     set ( WIN_MIN_VERSION 6.1.7601 )
+ endif()
+ 
+-# Default to using Qt6 for builds
+-# Enable Qt5 with -DUSE_QT5=1 in cmake config command
+-if ( NOT DEFINED USE_QT5 )
+-    set( USE_QT5 0 )
+-endif()
++# Qt6 for builds
++set( USE_QT5 0 )
+ 
+ if (${CMAKE_VERSION} VERSION_GREATER_EQUAL ${RECENT_CMAKE_VER} AND ${TRY_NEWER_FINDPYTHON3})
+     set ( USE_NEWER_FINDPYTHON3 1 )
+diff --git a/src/BookManipulation/Book.cpp b/src/BookManipulation/Book.cpp
+index e8beaff34..8e1967c3b 100644
+--- a/src/BookManipulation/Book.cpp
++++ b/src/BookManipulation/Book.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2022  Kevin B. Hendricks Stratford, ON, Canada 
++**  Copyright (C) 2015-2024  Kevin B. Hendricks Stratford, ON, Canada 
+ **  Copyright (C) 2009-2011  Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -638,14 +638,7 @@ void Book::CreateNewSections(const QStringList &new_sections, HTMLResource *orig
+         sectionInfo.file_suffix = i;
+         sectionInfo.file_extension = file_extension;
+         sectionInfo.folder_path = folder_path;
+-        sync.addFuture(
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)                      
+-            QtConcurrent::run(this, &Book::CreateANewSection, sectionInfo)
+-#else
+-            QtConcurrent::run(&Book::CreateANewSection, this, sectionInfo)
+-            //QtConcurrent::run(this, [this, sectionInfo] { &Book::CreateOneNewSection(sectionInfo);
+-#endif
+-                      );
++        sync.addFuture(QtConcurrent::run(&Book::CreateANewSection, this, sectionInfo));
+     }
+ 
+     sync.waitForFinished();
+@@ -1133,12 +1126,8 @@ QSet<QString> Book::GetWordsInHTMLFiles()
+         all_words.append(result);
+     }
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    return all_words.toSet();
+-#else
+     QSet<QString> allwordset(all_words.begin(), all_words.end());
+     return allwordset;
+-#endif
+ }
+ 
+ QStringList Book::GetWordsInHTMLFileMapped(HTMLResource *html_resource, const QString& default_lang)
+diff --git a/src/BookManipulation/FolderKeeper.cpp b/src/BookManipulation/FolderKeeper.cpp
+index 2cc8d3401..d0c84c29e 100644
+--- a/src/BookManipulation/FolderKeeper.cpp
++++ b/src/BookManipulation/FolderKeeper.cpp
+@@ -279,11 +279,7 @@ Resource *FolderKeeper::AddContentFileToFolder(const QString &fullfilepath,
+ QIcon FolderKeeper::GetFileIconFromMediaType(const QString& mt)
+ {
+     if (m_FileIconCache.contains(mt)) return m_FileIconCache[mt];
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0) 
+-    return QFileIconProvider().icon(QFileIconProvider::File);
+-#else
+     return QFileIconProvider().icon(QAbstractFileIconProvider::File);
+-#endif
+ }
+ 
+ 
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 2d54e5570..f409c834b 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -648,40 +648,12 @@ else()
+     project( sigil )
+ endif()
+ 
+-if (${USE_QT5})
+-# Building Sigil with Qt5 requires cmake 3.0+
+-# and a C++11 standards compatible compiler
+-    cmake_minimum_required( VERSION 3.0.0 )
+-
+-    if (NOT MSVC)
+-        include(CheckCXXCompilerFlag)
+-        CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+-        CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+-        if(COMPILER_SUPPORTS_CXX11)
+-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+-        elseif(COMPILER_SUPPORTS_CXX0X)
+-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+-            # Give gcc compilers that fall through the cracks a shot.
+-            if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+-                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+-                message("-- fpermissive CXX flag being used for gcc ${CMAKE_CXX_COMPILER_VERSION}")
+-            endif()
+-        else()
+-            message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+-        endif()
+-    endif()
+-
+-    include(qt5sigil.cmake)
+-
+ # Building Sigil with Qt6 requires cmake 3.16+
+ # and a C++17 standards compatible compiler
+-else()
+-    cmake_minimum_required( VERSION 3.16 )
++cmake_minimum_required( VERSION 3.16 )
+ 
+-    set(CMAKE_CXX_STANDARD 17)
+-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-    set(CMAKE_CXX_EXTENSIONS OFF)
++set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+-    include(qt6sigil.cmake)
+-
+-endif()
++include(qt6sigil.cmake)
+diff --git a/src/Dialogs/CPCompare.cpp b/src/Dialogs/CPCompare.cpp
+index eb2b4f60f..f43e57e3a 100644
+--- a/src/Dialogs/CPCompare.cpp
++++ b/src/Dialogs/CPCompare.cpp
+@@ -180,11 +180,7 @@ void CPCompare::handle_mod_request()
+ 
+             QApplication::setOverrideCursor(Qt::WaitCursor);
+             QFuture<QList<DiffRecord::DiffRec>> bfuture =
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-                QtConcurrent::run(&pr, &PythonRoutines::GenerateParsedNDiffInPython, leftpath, rightpath);
+-#else
+                 QtConcurrent::run(&PythonRoutines::GenerateParsedNDiffInPython, &pr, leftpath, rightpath);
+-#endif
+             bfuture.waitForFinished();
+             QList<DiffRecord::DiffRec> diffinfo = bfuture.result();
+             QApplication::restoreOverrideCursor();
+diff --git a/src/Dialogs/ClipboardHistorySelector.cpp b/src/Dialogs/ClipboardHistorySelector.cpp
+index 5307a3541..1d6d9ad20 100644
+--- a/src/Dialogs/ClipboardHistorySelector.cpp
++++ b/src/Dialogs/ClipboardHistorySelector.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2018-2021 Kevin B. Hendricks, Stratford, Ontario, Canada
++**  Copyright (C) 2018-2024 Kevin B. Hendricks, Stratford, Ontario, Canada
+ **  Copyright (C) 2012 John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012 Dave Heiland
+ **
+@@ -161,35 +161,6 @@ void ClipboardHistorySelector::SetupClipboardHistoryTable()
+     }
+ }
+ 
+-#if (QT_VERSION < QT_VERSION_CHECK(5,12,2))
+-// This is only needed for Linux
+-// See:  https://bugreports.qt.io/browse/QTBUG-44849
+-void ClipboardHistorySelector::TakeOwnershipOfClip()
+-{
+-    QApplication::clipboard()->setMimeData(copyMimeData(m_lastclip), QClipboard::Clipboard);
+-}
+-
+-// This is only needed for Linux
+-// See:  https://bugreports.qt.io/browse/QTBUG-44849
+-QMimeData *ClipboardHistorySelector::copyMimeData(const QMimeData *mimeReference)
+-{
+-    QMimeData *mimeCopy = new QMimeData();
+-    foreach(QString format, mimeReference->formats()) {
+-        // Retrieving data
+-        QByteArray data = mimeReference->data(format);
+-        // Checking for custom MIME types
+-        if(format.startsWith("application/x-qt")) {
+-            // Retrieving true format name
+-            int indexBegin = format.indexOf('"') + 1;
+-            int indexEnd = format.indexOf('"', indexBegin);
+-            format = format.mid(indexBegin, indexEnd - indexBegin);
+-        }
+-        mimeCopy->setData(format, data);
+-    }
+-    return mimeCopy;
+-}
+-#endif
+-
+ void ClipboardHistorySelector::ClipboardChanged()
+ {
+     const QString text = QApplication::clipboard()->text();
+@@ -198,16 +169,6 @@ void ClipboardHistorySelector::ClipboardChanged()
+         return;
+     }
+ 
+-// This is only needed for Linux
+-// See:  https://bugreports.qt.io/browse/QTBUG-44849
+-#if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC) && (QT_VERSION < QT_VERSION_CHECK(5,12,2))
+-    // if there is something on the clipboard make sure we own it
+-    if (!QApplication::clipboard()->ownsClipboard()) {
+-        m_lastclip = QApplication::clipboard()->mimeData(QClipboard::Clipboard);
+-        QTimer::singleShot(50, this, SLOT(TakeOwnershipOfClip()));
+-    }
+-#endif
+-
+     int existing_index = m_ClipboardHistoryItems->indexOf(text);
+ 
+     if (existing_index > 0) {
+diff --git a/src/Dialogs/ClipboardHistorySelector.h b/src/Dialogs/ClipboardHistorySelector.h
+index 3135d5cef..969f02b9c 100644
+--- a/src/Dialogs/ClipboardHistorySelector.h
++++ b/src/Dialogs/ClipboardHistorySelector.h
+@@ -69,17 +69,9 @@ private slots:
+     void ClipboardItemDoubleClicked(QTableWidgetItem *item);
+     void ClipboardChanged();
+ 
+-#if (QT_VERSION < QT_VERSION_CHECK(5,12,2))
+-    void TakeOwnershipOfClip();
+-#endif
+-
+ private:
+     void SetupClipboardHistoryTable();
+ 
+-#if (QT_VERSION < QT_VERSION_CHECK(5,12,2))
+-    QMimeData *copyMimeData(const QMimeData *mimeReference);
+-#endif
+-
+     void ReadSettings();
+     void WriteSettings();
+ 
+diff --git a/src/Dialogs/EmptyLayout.cpp b/src/Dialogs/EmptyLayout.cpp
+index c067e871e..0704e7f44 100644
+--- a/src/Dialogs/EmptyLayout.cpp
++++ b/src/Dialogs/EmptyLayout.cpp
+@@ -1,6 +1,6 @@
+ /****************************************************************************
+ **
+-**  Copyright (C) 2019-2021 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2019-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **
+ **  This file is part of Sigil.
+ **
+@@ -41,12 +41,7 @@
+ #include <QKeySequence>
+ #include <QMessageBox>
+ #include <QDebug>
+-
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-#include <QDesktopWidget>
+-#else
+ #include <QScreen>
+-#endif
+ 
+ #include "Misc/SettingsStore.h"
+ #include "Misc/Utility.h"
+@@ -89,11 +84,7 @@ EmptyLayout::EmptyLayout(const QString &epubversion, QWidget *parent)
+     view->setIndentation(20);
+     view->setSortingEnabled(true);
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    const QSize availableSize = QApplication::desktop()->availableGeometry(view).size();
+-#else
+     const QSize availableSize = QGuiApplication::primaryScreen()->availableGeometry().size();
+-#endif
+ 
+     view->resize(availableSize / 2);
+     view->setColumnWidth(0, view->width() / 3);
+@@ -294,11 +285,7 @@ void EmptyLayout::loadDesign()
+     view->setIndentation(20);
+     view->setSortingEnabled(true);
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    const QSize availableSize = QApplication::desktop()->availableGeometry(view).size();
+-#else
+     const QSize availableSize = QGuiApplication::primaryScreen()->availableGeometry().size();
+-#endif
+ 
+     view->resize(availableSize / 2);
+     view->setColumnWidth(0, view->width() / 3);
+diff --git a/src/Dialogs/Inspector.cpp b/src/Dialogs/Inspector.cpp
+index d54a2a8c1..b89543772 100644
+--- a/src/Dialogs/Inspector.cpp
++++ b/src/Dialogs/Inspector.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+  **
+- **  Copyright (C) 2019-2021 Kevin B. Hendricks, Stratford Ontario Canada
++ **  Copyright (C) 2019-2024 Kevin B. Hendricks, Stratford Ontario Canada
+  **
+  **  This file is part of Sigil.
+  **
+@@ -82,9 +82,7 @@ Inspector::~Inspector()
+ {
+     if (m_inspectView) {
+         m_inspectView->close();
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+         m_inspectView->page()->setInspectedPage(nullptr);
+-#endif
+         m_view = nullptr;
+         delete m_inspectView;
+         m_inspectView = nullptr;
+@@ -146,30 +144,16 @@ void Inspector::InspectPageofView(QWebEngineView* view)
+ {
+     m_view = view;
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     if (m_view) {
+         m_inspectView->page()->setInspectedPage(m_view->page());
+     }
+-#else
+-    if (m_view) {
+-        QString not_supported = tr("The Inspector functionality is not supported before Qt 5.11");
+-        QString response = "<html><head><title>Warning</title></head><body><p>" + 
+-                    not_supported + "</p></body></html>";
+-        m_inspectView->setHtml(response);
+-        show();
+-    }
+-#endif
+ }
+ 
+ void Inspector::StopInspection()
+ {
+     SaveSettings();
+     m_view = nullptr;
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     m_inspectView->page()->setInspectedPage(nullptr);
+-#else
+-    m_inspectView->setHtml("<html><head><title></title></head><body></body></html>");
+-#endif
+ }
+ 
+ QSize Inspector::sizeHint()
+diff --git a/src/Dialogs/ManageRepos.cpp b/src/Dialogs/ManageRepos.cpp
+index 40b4b16b4..534a1faed 100644
+--- a/src/Dialogs/ManageRepos.cpp
++++ b/src/Dialogs/ManageRepos.cpp
+@@ -151,17 +151,10 @@ void ManageRepos::ShowLog()
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+     QFuture<QString> future =
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QtConcurrent::run(&pr,
+-                          &PythonRoutines::GenerateRepoLogSummaryInPython,
+-                          localRepo,
+-                          bookid);
+-#else
+         QtConcurrent::run(&PythonRoutines::GenerateRepoLogSummaryInPython,
+                           &pr,
+                           localRepo,
+                           bookid);
+-#endif
+     future.waitForFinished();
+     QString logData = future.result();
+ 
+diff --git a/src/Dialogs/MetaEditor.cpp b/src/Dialogs/MetaEditor.cpp
+index 51eb2fe63..e03093d07 100644
+--- a/src/Dialogs/MetaEditor.cpp
++++ b/src/Dialogs/MetaEditor.cpp
+@@ -40,14 +40,6 @@
+ #include "Dialogs/MetaEditorItemDelegate.h"
+ #include "Dialogs/MetaEditor.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const QString SETTINGS_GROUP = "meta_editor";
+ static const QString _IN = "  ";
+ static const QString _GS = QString(QChar(29)); // Ascii Group Separator
+@@ -318,7 +310,7 @@ QString MetaEditor::SetNewOPFMetadata(QString& data)
+     QString newopfdata = m_opfdata;
+     MetadataPieces mdp;
+     // Translate from Human Readable Form
+-    QStringList dlist = data.split(_RS, QT_ENUM_SKIPEMPTYPARTS);
++    QStringList dlist = data.split(_RS, Qt::SkipEmptyParts);
+     QStringList nlist;
+     foreach(QString rc, dlist) {
+         if (rc.startsWith(_IN)) {
+diff --git a/src/Dialogs/PreferenceWidgets/AppearanceWidget.cpp b/src/Dialogs/PreferenceWidgets/AppearanceWidget.cpp
+index 28f8618d8..0eb40d0b6 100644
+--- a/src/Dialogs/PreferenceWidgets/AppearanceWidget.cpp
++++ b/src/Dialogs/PreferenceWidgets/AppearanceWidget.cpp
+@@ -181,11 +181,7 @@ PreferencesWidget::ResultActions AppearanceWidget::saveSettings()
+     settings.setSpecialCharacterAppearance(specialCharacterAppearance);
+     settings.setMainMenuIconSize(double(ui.iconSizeSlider->value())/10);
+     // PV settings can be globally changed and will take effect immediately
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QWebEngineSettings *web_settings = QWebEngineSettings::defaultSettings();
+-#else
+     QWebEngineSettings *web_settings = QWebEngineProfile::defaultProfile()->settings();
+-#endif
+     web_settings->setFontSize(QWebEngineSettings::DefaultFontSize,   PVAppearance.font_size);
+     web_settings->setFontFamily(QWebEngineSettings::StandardFont,    PVAppearance.font_family_standard);
+     web_settings->setFontFamily(QWebEngineSettings::SerifFont,       PVAppearance.font_family_serif);
+diff --git a/src/Dialogs/PreferenceWidgets/SpellCheckWidget.cpp b/src/Dialogs/PreferenceWidgets/SpellCheckWidget.cpp
+index 8f6fc8a60..347aeb81d 100644
+--- a/src/Dialogs/PreferenceWidgets/SpellCheckWidget.cpp
++++ b/src/Dialogs/PreferenceWidgets/SpellCheckWidget.cpp
+@@ -473,9 +473,6 @@ void SpellCheckWidget::loadUserDictionaryWordList(QString dict_name)
+ 
+     if (userDictFile.open(QIODevice::ReadOnly)) {
+         QTextStream userDictStream(&userDictFile);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        userDictStream.setCodec("UTF-8");
+-#endif
+         QString line;
+ 
+         do {
+@@ -526,9 +523,6 @@ void SpellCheckWidget::saveUserDictionaryWordList(QString dict_name)
+ 
+     if (userDictFile.open(QFile::WriteOnly | QFile::Truncate)) {
+         QTextStream userDictStream(&userDictFile);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        userDictStream.setCodec("UTF-8");
+-#endif
+         foreach(QString word, words) {
+             userDictStream << word << "\n";
+         }
+diff --git a/src/Dialogs/ReportsWidgets/CharactersInHTMLFilesWidget.cpp b/src/Dialogs/ReportsWidgets/CharactersInHTMLFilesWidget.cpp
+index ce53a24b7..eac7e2ace 100644
+--- a/src/Dialogs/ReportsWidgets/CharactersInHTMLFilesWidget.cpp
++++ b/src/Dialogs/ReportsWidgets/CharactersInHTMLFilesWidget.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2019-2022 Kevin B. Hendricks, Stratford, Ontario, Canada
++**  Copyright (C) 2019-2024 Kevin B. Hendricks, Stratford, Ontario, Canada
+ **  Copyright (C) 2012      John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012      Dave Heiland
+ **
+@@ -100,11 +100,7 @@ void CharactersInHTMLFilesWidget::AddTableData()
+     foreach (uint unichr, characters) {
+         // if (QChar::isSurrogate(unichr)) {
+         if (unichr >= 0x10000) {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            QString nonbmpchr = QString::fromUcs4(&unichr, 1);
+-#else
+             QString nonbmpchr = QString::fromUcs4(reinterpret_cast<char32_t*>(&unichr), 1);
+-#endif
+             all_characters += nonbmpchr;
+         } else {
+             all_characters.append(QChar(unichr));
+@@ -121,11 +117,7 @@ void CharactersInHTMLFilesWidget::AddTableData()
+ 
+         // if (QChar::isSurrogate(unichr)) {
+         if (unichr >= 0x10000) {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            QString nonbmpchr = QString::fromUcs4(&unichr, 1);
+-#else
+             QString nonbmpchr = QString::fromUcs4(reinterpret_cast<char32_t*>(&unichr), 1);
+-#endif
+             chrtxt += nonbmpchr;
+             
+         } else {
+diff --git a/src/Dialogs/SelectCharacter.cpp b/src/Dialogs/SelectCharacter.cpp
+index b421d92d7..d6fe890ab 100644
+--- a/src/Dialogs/SelectCharacter.cpp
++++ b/src/Dialogs/SelectCharacter.cpp
+@@ -438,9 +438,5 @@ void SelectCharacter::WriteSettings()
+ 
+ void SelectCharacter::connectSignalsSlots()
+ {
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    connect(m_buttonMapper, SIGNAL(mapped(const QString &)), this, SLOT(SetSelectedCharacter(const QString &)));
+-#else
+     connect(m_buttonMapper, SIGNAL(mappedString(const QString &)), this, SLOT(SetSelectedCharacter(const QString &)));
+-#endif
+ }
+diff --git a/src/Dialogs/SelectFiles.cpp b/src/Dialogs/SelectFiles.cpp
+index 82ba1fffc..8f0ab10c8 100644
+--- a/src/Dialogs/SelectFiles.cpp
++++ b/src/Dialogs/SelectFiles.cpp
+@@ -107,9 +107,7 @@ SelectFiles::SelectFiles(QString title, QList<Resource *> media_resources, QStri
+     m_WebView->setContextMenuPolicy(Qt::NoContextMenu);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     m_WebView->setAcceptDrops(false);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+     m_WebView->page()->settings()->setAttribute(QWebEngineSettings::ShowScrollBars,false);
+-#endif
+     ui.avLayout->addWidget(m_WebView);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     ui.Details->setFocusPolicy(Qt::NoFocus);
+diff --git a/src/Dialogs/SpellcheckEditor.cpp b/src/Dialogs/SpellcheckEditor.cpp
+index 3563cdb51..eff3362d0 100644
+--- a/src/Dialogs/SpellcheckEditor.cpp
++++ b/src/Dialogs/SpellcheckEditor.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2022 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **  Copyright (C) 2012-2013 John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012-2013 Dave Heiland
+ **
+@@ -634,14 +634,8 @@ void SpellcheckEditor::ConnectSignalsSlots()
+             this,               SLOT(ChangeState(int)));
+     connect(ui.LocaleAwareSort,  SIGNAL(stateChanged(int)),
+             this,               SLOT(ChangeState(int)));
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    connect(ui.Dictionaries, SIGNAL(activated(const QString &)),
+-            this,            SLOT(DictionaryChanged(const QString &)));
+-#else
+     connect(ui.Dictionaries, SIGNAL(textActivated(const QString &)),
+             this,            SLOT(DictionaryChanged(const QString &)));
+-#endif
+-
+     connect(m_FilterSC, SIGNAL(activated()), ui.FilterText, SLOT(setFocus()));
+     connect(m_ShowAllSC, SIGNAL(activated()), this, SLOT(toggleShowAllWords()));
+     connect(m_AwareSC, SIGNAL(activated()), this, SLOT(toggleLocaleAwareSort()));
+diff --git a/src/Dialogs/TreeItem.cpp b/src/Dialogs/TreeItem.cpp
+index 0336cf828..dece1fc18 100644
+--- a/src/Dialogs/TreeItem.cpp
++++ b/src/Dialogs/TreeItem.cpp
+@@ -1,6 +1,6 @@
+ /****************************************************************************
+ **
+-** Modifications Copyright (C) 2016-2021 Kevin B, Hendricks, Stratford, ON, Canada
++** Modifications Copyright (C) 2016-2024 Kevin B, Hendricks, Stratford, ON, Canada
+ **
+ ** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+ ** Contact: http://www.qt-project.org/legal
+@@ -131,11 +131,7 @@ bool TreeItem::moveChildUp(int position)
+     if (position <=0 || position > childItems.size() - 1)
+         return false;
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    childItems.swap(position, position-1);
+-#else
+     childItems.swapItemsAt(position, position-1);
+-#endif
+     return true;
+ }
+ 
+@@ -144,11 +140,7 @@ bool TreeItem::moveChildDown(int position)
+     if (position < 0 || position >= childItems.size() - 1)
+         return false;
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    childItems.swap(position, position+1);
+-#else
+     childItems.swapItemsAt(position, position+1);
+-#endif
+     return true;
+ }
+ 
+diff --git a/src/Dialogs/TreeModel.cpp b/src/Dialogs/TreeModel.cpp
+index e6a04c038..542787905 100644
+--- a/src/Dialogs/TreeModel.cpp
++++ b/src/Dialogs/TreeModel.cpp
+@@ -1,6 +1,6 @@
+ /****************************************************************************
+ **
+-** Modifications Copyright (C) 2016 Kevin B. Hendricks, Stratford, ON Canada
++** Modifications Copyright (C) 2016-2024  Kevin B. Hendricks, Stratford, ON Canada
+ **
+ ** Copyright (C) 2013 Digia Plc and/or its subsidiary(-ies).
+ ** Contact: http://www.qt-project.org/legal
+@@ -45,14 +45,6 @@
+ #include "Dialogs/TreeItem.h"
+ #include "Dialogs/TreeModel.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ const QString _GS = QString(QChar(29));
+ const QString _RS = QString(QChar(30));
+ const QString _US = QString(QChar(31));
+@@ -67,7 +59,7 @@ TreeModel::TreeModel(const QStringList &headers, const QString &data, QObject *p
+         rootData << header;
+ 
+     rootItem = new TreeItem(rootData);
+-    QStringList datalist = data.split(_RS, QT_ENUM_SKIPEMPTYPARTS);
++    QStringList datalist = data.split(_RS, Qt::SkipEmptyParts);
+     setupModelData(datalist, rootItem);
+ }
+ 
+@@ -278,11 +270,11 @@ void TreeModel::setupModelData(const QStringList &lines, TreeItem *parent)
+ 
+         if (!lineData.isEmpty()) {
+             // Read the column data from the rest of the line.
+-            QStringList columnStrings = lineData.split(_US, QT_ENUM_SKIPEMPTYPARTS);
++            QStringList columnStrings = lineData.split(_US, Qt::SkipEmptyParts);
+             QVector<QVariant> columnData;
+             QVector<QVariant> tipData;
+             for (int column = 0; column < columnStrings.count(); ++column) {
+-                QStringList parts = columnStrings[column].split(_GS, QT_ENUM_KEEPEMPTYPARTS);
++                QStringList parts = columnStrings[column].split(_GS, Qt::KeepEmptyParts);
+                 columnData << parts.at(0);
+                 tipData << parts.at(1);
+             }
+diff --git a/src/EmbedPython/EmbeddedPython.cpp b/src/EmbedPython/EmbeddedPython.cpp
+index 0a8c05cb3..bf94833e2 100644
+--- a/src/EmbedPython/EmbeddedPython.cpp
++++ b/src/EmbedPython/EmbeddedPython.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2023  Kevin Hendricks
++**  Copyright (C) 2015-2024  Kevin Hendricks
+ **  Copyright (C) 2015       John Schember <john@nachtimwald.com>
+ **
+ **  This file is part of Sigil.
+@@ -597,19 +597,11 @@ QVariant EmbeddedPython::PyObjectToQVariant(PyObject *po, bool ret_python_object
+             res = QVariant(QString::fromLatin1(reinterpret_cast<const char *>(PyUnicode_1BYTE_DATA(po)), -1));
+ 
+         } else if (kind == PyUnicode_2BYTE_KIND) {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            res = QVariant(QString::fromUtf16(PyUnicode_2BYTE_DATA(po), -1));
+-#else
+             res = QVariant(QString::fromUtf16(reinterpret_cast<char16_t*>(PyUnicode_2BYTE_DATA(po)), -1));
+-#endif
+ 
+         } else if (kind == PyUnicode_4BYTE_KIND) {
+             // PyUnicode_4BYTE_KIND
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            res = QVariant(QString::fromUcs4(PyUnicode_4BYTE_DATA(po), -1));
+-#else
+             res = QVariant(QString::fromUcs4(reinterpret_cast<char32_t*>(PyUnicode_4BYTE_DATA(po)), -1));
+-#endif
+         } else {
+             // convert to utf8 since not a known
+             res = QVariant(QString::fromUtf8(PyUnicode_AsUTF8(po),-1));
+@@ -647,11 +639,7 @@ PyObject* EmbeddedPython::QVariantToPyObject(const QVariant &v)
+ {
+     PyObject* value = NULL;
+     bool      ok;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    switch ((QMetaType::Type)v.type()) {
+-#else
+     switch (v.typeId()) {
+-#endif
+         case QMetaType::Double:
+             value = Py_BuildValue("d", v.toDouble(&ok));
+             break;
+@@ -707,23 +695,13 @@ PyObject* EmbeddedPython::QVariantToPyObject(const QVariant &v)
+             break;
+         default:
+           {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            if ((QMetaType::Type)v.type() >= QMetaType::User && (v.userType() ==  m_pyobjmetaid))
+-#else
+-            if (v.typeId() >= QMetaType::User && (v.userType() ==  m_pyobjmetaid))
+-#endif
+-            {
++            if (v.typeId() >= QMetaType::User && (v.userType() ==  m_pyobjmetaid)) {
+               PyObjectPtr op = v.value<PyObjectPtr>();
+               value = op.object();
+               // Need to increment object count otherwise will go away when Py_XDECREF used on pyargs
+               Py_XINCREF(value);
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            } else if ((QMetaType::Type)v.type() >= QMetaType::User && (v.userType() ==  m_listintmetaid))
+-#else
+-            } else if (v.typeId() >= QMetaType::User && (v.userType() ==  m_listintmetaid))
+-#endif
+-            {
++            } else if (v.typeId() >= QMetaType::User && (v.userType() ==  m_listintmetaid)) {
+               QList<int> alist = v.value<QList<int> >();
+               value = PyList_New(alist.size());
+               int pos = 0;
+diff --git a/src/Exporters/NCXWriter.cpp b/src/Exporters/NCXWriter.cpp
+index 20bb3f3cb..37a571e80 100644
+--- a/src/Exporters/NCXWriter.cpp
++++ b/src/Exporters/NCXWriter.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2016-2020 Kevin B. Hendricks, Stratford, Ontario Canada
++**  Copyright (C) 2016-2024 Kevin B. Hendricks, Stratford, Ontario Canada
+ **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -30,15 +30,6 @@
+ #include "ResourceObjects/NCXResource.h"
+ #include "sigil_constants.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+-
+ NCXWriter::NCXWriter(const Book *book, QIODevice &device)
+     :
+     XMLWriter(book, device),
+@@ -259,7 +250,7 @@ QString NCXWriter::ConvertBookPathToNCXRelative(const QString & bookpath)
+ {
+     QString ncx_bkpath = m_ncxresource->GetRelativePath();
+     // split off any fragment added to bookpath destination
+-    QStringList pieces = bookpath.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList pieces = bookpath.split('#', Qt::KeepEmptyParts);
+     QString dest_bkpath = pieces.at(0);
+     QString fragment = "";
+     if (pieces.size() > 1) fragment = pieces.at(1);
+diff --git a/src/Importers/ImportHTML.cpp b/src/Importers/ImportHTML.cpp
+index c875f74fd..a51569cf7 100644
+--- a/src/Importers/ImportHTML.cpp
++++ b/src/Importers/ImportHTML.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2022 Kevin B. Hendricks, Stratford, Ontario Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford, Ontario Canada
+ **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -254,26 +254,15 @@ QHash<QString, QString> ImportHTML::LoadFolderStructure(const QString &source)
+     QStringList mediapaths = XhtmlDoc::GetPathsToMediaFiles(source);
+     QStringList stylepaths = XhtmlDoc::GetPathsToStyleFiles(source);
+     QFutureSynchronizer<QHash<QString, QString>> sync;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    sync.addFuture(QtConcurrent::run(this, &ImportHTML::LoadMediaFiles,  mediapaths));
+-    sync.addFuture(QtConcurrent::run(this, &ImportHTML::LoadStyleFiles,  stylepaths));
+-#else
+     sync.addFuture(QtConcurrent::run(&ImportHTML::LoadMediaFiles, this,  mediapaths));
+     sync.addFuture(QtConcurrent::run(&ImportHTML::LoadStyleFiles, this,  stylepaths));
+-#endif
+     sync.waitForFinished();
+     QList<QFuture<QHash<QString, QString>>> futures = sync.futures();
+     int num_futures = futures.count();
+     QHash<QString, QString> updates;
+ 
+     for (int i = 0; i < num_futures; ++i) {
+-        
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-        updates.unite(futures.at(i).result());
+-#else
+         updates.insert(futures.at(i).result());
+-#endif
+-        
+     }
+ 
+     return updates;
+diff --git a/src/MainUI/BookBrowser.cpp b/src/MainUI/BookBrowser.cpp
+index 4b5dd1622..57365218a 100644
+--- a/src/MainUI/BookBrowser.cpp
++++ b/src/MainUI/BookBrowser.cpp
+@@ -63,12 +63,8 @@
+ 
+ #define DBG if(0)
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    static const QVariant QVINVALID = QVariant(QVariant::Invalid);
+-#else 
+-    #include <QMetaType>
+-    static const QVariant QVINVALID = QVariant(QMetaType(QMetaType::UnknownType));
+-#endif
++#include <QMetaType>
++static const QVariant QVINVALID = QVariant(QMetaType(QMetaType::UnknownType));
+ 
+ 
+ static const QString SETTINGS_GROUP = "bookbrowser";
+@@ -2190,11 +2186,7 @@ void BookBrowser::ConnectSignalsToSlots()
+     m_openWithMapper->setMapping(m_OpenWithEditor3, 3);
+     connect(m_OpenWithEditor4, SIGNAL(triggered()),  m_openWithMapper, SLOT(map()));
+     m_openWithMapper->setMapping(m_OpenWithEditor4, 4);
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    connect(m_openWithMapper, SIGNAL(mapped(int)), this, SLOT(OpenWithEditor(int)));
+-#else
+     connect(m_openWithMapper, SIGNAL(mappedInt(int)), this, SLOT(OpenWithEditor(int)));
+-#endif
+     connect(m_AdobesObfuscationMethod, SIGNAL(triggered()), this, SLOT(AdobesObfuscationMethod()));
+     connect(m_IdpfsObfuscationMethod,  SIGNAL(triggered()), this, SLOT(IdpfsObfuscationMethod()));
+     connect(m_NoObfuscationMethod,     SIGNAL(triggered()), this, SLOT(NoObfuscationMethod()));
+diff --git a/src/MainUI/MainWindow.cpp b/src/MainUI/MainWindow.cpp
+index d12cacb59..04d06434c 100644
+--- a/src/MainUI/MainWindow.cpp
++++ b/src/MainUI/MainWindow.cpp
+@@ -41,11 +41,6 @@
+ #include <QtWebEngineCore>
+ #include <QRegularExpression>
+ #include <QRegularExpressionMatch>
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-#ifdef Q_OS_WIN32
+-#include <QtWinExtras>
+-#endif
+-#endif
+ #include <QString>
+ #include <QStringList>
+ #include <QFont>
+@@ -56,10 +51,6 @@
+ #include <QStyle>
+ #include <QDebug>
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-#include <QDesktopWidget>
+-#endif
+-
+ #include "BookManipulation/CleanSource.h"
+ #include "BookManipulation/Index.h"
+ #include "BookManipulation/FolderKeeper.h"
+@@ -319,12 +310,7 @@ MainWindow::~MainWindow()
+ 
+ void MainWindow::createJumpList()
+ {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-#ifdef Q_OS_WIN32
+-    QWinJumpList jumplist;
+-    jumplist.recent()->setVisible(true);
+-#endif
+-#endif
++    // no longer used in Qt 6
+ }
+ 
+ void MainWindow::RunAutomate1()
+@@ -899,13 +885,8 @@ bool MainWindow::RepoCommit()
+     // now perform the commit using python in a separate thread since this
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QFuture<QString> future = QtConcurrent::run(&pr, &PythonRoutines::PerformRepoCommitInPython,
+-                                                localRepo, bookid, bookinfo, bookroot, bookfiles);
+-#else
+     QFuture<QString> future = QtConcurrent::run(&PythonRoutines::PerformRepoCommitInPython, &pr,
+                                                 localRepo, bookid, bookinfo, bookroot, bookfiles);
+-#endif
+     future.waitForFinished();
+     QString commit_result = future.result();
+ 
+@@ -948,13 +929,8 @@ void MainWindow::RepoCheckout(QString bookid, QString destdir, QString filename,
+     // now perform the operation using python in a separate thread since this
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QFuture<QStringList> future = QtConcurrent::run(&pr, &PythonRoutines::GetRepoTagsInPython, 
+-                                                         localRepo, bookid);
+-#else
+     QFuture<QStringList> future = QtConcurrent::run(&PythonRoutines::GetRepoTagsInPython, &pr,
+                                                          localRepo, bookid);
+-#endif   
+     future.waitForFinished();
+     QStringList tag_results = future.result();
+     if (tag_results.isEmpty()) {
+@@ -994,13 +970,8 @@ void MainWindow::RepoCheckout(QString bookid, QString destdir, QString filename,
+     open_tab_positions << m_TabManager->GetCurrentContentTab()->GetCursorPosition();
+     
+     QApplication::setOverrideCursor(Qt::WaitCursor);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QFuture<QString> afuture = QtConcurrent::run(&pr, &PythonRoutines::GenerateEpubFromTagInPython, 
+-                                                 localRepo, bookid, tagname, filename, destdir);
+-#else
+     QFuture<QString> afuture = QtConcurrent::run(&PythonRoutines::GenerateEpubFromTagInPython, &pr,
+                                                  localRepo, bookid, tagname, filename, destdir);
+-#endif
+     afuture.waitForFinished();
+     QString epub_result = afuture.result();
+     if (epub_result.isEmpty()) {
+@@ -1067,13 +1038,8 @@ void MainWindow::RepoDiff(QString bookid)
+     // Get tags using python in a separate thread since this
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    QFuture<QStringList> future = QtConcurrent::run(&pr, &PythonRoutines::GetRepoTagsInPython, 
+-                                                          localRepo, bookid);
+-#else
+     QFuture<QStringList> future = QtConcurrent::run(&PythonRoutines::GetRepoTagsInPython, &pr,
+                                                           localRepo, bookid);
+-#endif
+     future.waitForFinished();
+     QStringList tag_results = future.result();
+     if (tag_results.isEmpty()) {
+@@ -1100,13 +1066,8 @@ void MainWindow::RepoDiff(QString bookid)
+     // checkout this tag version and copy it to a tempfolder
+     TempFolder destdir;
+     QApplication::setOverrideCursor(Qt::WaitCursor);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    QFuture<QString> cfuture = QtConcurrent::run(&pr, &PythonRoutines::CopyTagToDestDirInPython, 
+-                                                 localRepo, bookid, chkpoint1, destdir.GetPath() );
+-#else
+     QFuture<QString> cfuture = QtConcurrent::run(&PythonRoutines::CopyTagToDestDirInPython, &pr,
+                                                  localRepo, bookid, chkpoint1, destdir.GetPath() );
+-#endif
+     cfuture.waitForFinished();
+     QString copied = cfuture.result();
+     QApplication::restoreOverrideCursor();
+@@ -1118,14 +1079,8 @@ void MainWindow::RepoDiff(QString bookid)
+ 
+     QApplication::setOverrideCursor(Qt::WaitCursor);
+     
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    QFuture<QList<QStringList> > dfuture = QtConcurrent::run(&pr, 
+-                                             &PythonRoutines::GetCurrentStatusVsDestDirInPython, 
+-                                             bookroot, bookfiles, destdir.GetPath());
+-#else
+     QFuture<QList<QStringList> > dfuture = QtConcurrent::run(&PythonRoutines::GetCurrentStatusVsDestDirInPython,
+                                              &pr, bookroot, bookfiles, destdir.GetPath());
+-#endif
+     dfuture.waitForFinished();
+     QList<QStringList> sres = dfuture.result();
+     QApplication::restoreOverrideCursor();
+@@ -1166,13 +1121,8 @@ void MainWindow::RepoEditTagDescription()
+     // Get tags using python in a separate thread since this
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    QFuture<QStringList> future = QtConcurrent::run(&pr, &PythonRoutines::GetRepoTagsInPython, 
+-                                                          localRepo, bookid);
+-#else
+     QFuture<QStringList> future = QtConcurrent::run(&PythonRoutines::GetRepoTagsInPython, &pr,
+                                                           localRepo, bookid);
+-#endif
+     future.waitForFinished();
+     QStringList tag_results = future.result();
+     if (tag_results.isEmpty()) {
+@@ -1217,13 +1167,8 @@ void MainWindow::RepoEditTagDescription()
+     if (ok && !newmessage.isEmpty()) {
+         QApplication::setOverrideCursor(Qt::WaitCursor);
+         PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QFuture<bool> afuture = QtConcurrent::run(&pr, &PythonRoutines::ChangeRepoTagMsgInPython, 
+-                                                 localRepo, bookid, tagname, newmessage);
+-#else
+         QFuture<bool> afuture = QtConcurrent::run(&PythonRoutines::ChangeRepoTagMsgInPython, &pr,
+                                                  localRepo, bookid, tagname, newmessage);
+-#endif
+         afuture.waitForFinished();
+         bool res = afuture.result();
+         if (!res) {
+@@ -1251,17 +1196,10 @@ void MainWindow::RepoShowLog()
+     // may take a while depending on the speed of the filesystem
+     PythonRoutines pr;
+     QFuture<QString> future =
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QtConcurrent::run(&pr,
+-                          &PythonRoutines::GenerateRepoLogSummaryInPython,
+-                          localRepo,
+-                          bookid);
+-#else
+-        QtConcurrent::run(&PythonRoutines::GenerateRepoLogSummaryInPython,
+-                          &pr,
+-                          localRepo,
+-                          bookid);
+-#endif
++    QtConcurrent::run(&PythonRoutines::GenerateRepoLogSummaryInPython,
++                      &pr,
++                      localRepo,
++                      bookid);
+     future.waitForFinished();
+     QString logData = future.result();
+ 
+@@ -2605,13 +2543,8 @@ bool MainWindow::GenerateNCXGuideFromNav()
+ 
+     // Now build the ncx in python in a separate thread since may be an long job
+     PythonRoutines pr;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    QFuture<QString> future = QtConcurrent::run(&pr, &PythonRoutines::GenerateNcxInPython, navdata, 
+-                                                navbkpath, ncxdir, doctitle, mainid);
+-#else
+     QFuture<QString> future = QtConcurrent::run(&PythonRoutines::GenerateNcxInPython, &pr, navdata, 
+                                              navbkpath, ncxdir, doctitle, mainid);
+-#endif
+     future.waitForFinished();
+     QString ncxdata = future.result();
+ 
+@@ -4992,11 +4925,7 @@ void MainWindow::ReadSettings()
+     if (MaximizedState) {
+ 
+ #ifndef Q_OS_MAC
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QRect maxsize = settings.value("max_mw_geometry", QApplication::desktop()->availableGeometry(this)).toRect();
+-#else
+         QRect maxsize = settings.value("max_mw_geometry", QGuiApplication::primaryScreen()->availableGeometry()).toRect();
+-#endif
+         setGeometry(maxsize);
+         setWindowState(windowState() | Qt::WindowMaximized);
+ #else
+@@ -5005,11 +4934,7 @@ void MainWindow::ReadSettings()
+ 
+     } else if (FullScreenState) {
+ #ifndef Q_OS_MAC
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QRect maxsize = settings.value("max_mw_geometry", QApplication::desktop()->screenGeometry(this)).toRect();
+-#else
+         QRect maxsize = settings.value("max_mw_geometry", QGuiApplication::primaryScreen()->availableGeometry()).toRect();
+-#endif
+         setGeometry(maxsize);
+         setWindowState(windowState() | Qt::WindowFullScreen);
+ #else
+diff --git a/src/MainUI/PreviewWindow.cpp b/src/MainUI/PreviewWindow.cpp
+index 5931a6f97..c303ecc82 100644
+--- a/src/MainUI/PreviewWindow.cpp
++++ b/src/MainUI/PreviewWindow.cpp
+@@ -413,34 +413,6 @@ bool PreviewWindow::UpdatePage(QString filename_url, QString text, QList<Element
+         }
+     }
+ 
+-
+-#if QT_VERSION <= QT_VERSION_CHECK(5, 12, 5)
+-    // This workaround to a QtWebEngine bug is no longer needed after Qt 5.12.5
+-    if (fixup_fullscreen_svg_images(text)) {
+-        QRegularExpression svg_height("<\\s*svg\\s[^>]*height\\s*=\\s*[\"'](100%)[\"'][^>]*>",
+-                                     QRegularExpression::CaseInsensitiveOption |
+-                                     QRegularExpression::MultilineOption | 
+-                                     QRegularExpression::DotMatchesEverythingOption);
+-        QRegularExpressionMatch hmo = svg_height.match(text, 0);
+-        if (hmo.hasMatch()) {
+-            int bp = hmo.capturedStart(1);
+-            int n = hmo.capturedLength(1);
+-            text = text.replace(bp, n, "100vh"); 
+-        }
+-
+-        QRegularExpression svg_width("<\\s*svg\\s[^>]*width\\s*=\\s*[\"'](100%)[\"'][^>]*>",
+-                                    QRegularExpression::CaseInsensitiveOption |
+-                                    QRegularExpression::MultilineOption | 
+-                                    QRegularExpression::DotMatchesEverythingOption);
+-        QRegularExpressionMatch wmo = svg_width.match(text, 0);
+-        if (wmo.hasMatch()) {
+-            int bp = wmo.capturedStart(1);
+-            int n = wmo.capturedLength(1);
+-            text = text.replace(bp, n, "100vw"); 
+-        }
+-    }
+-#endif
+-    
+     m_Filepath = filename_url;
+     m_Preview->CustomSetDocument(filename_url, text);
+ 
+@@ -590,11 +562,7 @@ bool PreviewWindow::eventFilter(QObject *object, QEvent *event)
+           QString user_color = Utility::GetEnvironmentVar("SIGIL_FOCUS_HIGHLIGHT_COLOR");
+           if (!user_color.isEmpty() && user_color.startsWith("#") && user_color.length() == 7) {
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(6,4,0)
+               if (QColor::isValidColorName(user_color)) {
+-#else
+-              if (QColor::isValidColor(user_color)) {
+-#endif
+                   hcolor = user_color;
+               }
+           }
+@@ -731,22 +699,10 @@ void PreviewWindow::InspectPreviewPage()
+ 
+ void PreviewWindow::PrintRendered()
+ {
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+     // Refresh skipflags from Prefs
+     SettingsStore settings;
+     m_skipPrintPreview = settings.skipPrintPreview();
+     m_WebViewPrinter->setContent(m_Filepath, m_Preview->GetHTML(), m_skipPrintPreview);
+-#else
+-    QMessageBox msgbox;
+-    QString text = tr("Feature not available before Qt5.12.x");
+-    msgbox.setWindowFlags(Qt::Window | Qt::WindowStaysOnTopHint);
+-    msgbox.setModal(true);
+-    msgbox.setWindowTitle("Sigil");
+-    msgbox.setText("<h3>" + text + "</h3><br/>");
+-    msgbox.setIcon(QMessageBox::Icon::Warning);
+-    msgbox.setStandardButtons(QMessageBox::Close);
+-    msgbox.exec();
+-#endif
+ 
+ }
+ 
+diff --git a/src/MainUI/TOCModel.cpp b/src/MainUI/TOCModel.cpp
+index 1180525f1..881ffb5f3 100644
+--- a/src/MainUI/TOCModel.cpp
++++ b/src/MainUI/TOCModel.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2016-2020 Kevin B. Hendricks, Stratford, Ontario, Canada
++**  Copyright (C) 2016-2024 Kevin B. Hendricks, Stratford, Ontario, Canada
+ **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -33,14 +33,6 @@
+ #include "ResourceObjects/NavProcessor.h"
+ #include "BookManipulation/CleanSource.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ TOCModel::TOCModel(QObject *parent)
+     :
+     QStandardItemModel(parent),
+@@ -89,11 +81,7 @@ void TOCModel::Refresh()
+     }
+ 
+     m_RefreshInProgress = true;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    m_TocRootWatcher->setFuture(QtConcurrent::run(this, &TOCModel::GetRootTOCEntry));
+-#else
+     m_TocRootWatcher->setFuture(QtConcurrent::run(&TOCModel::GetRootTOCEntry, this));
+-#endif
+ }
+ 
+ 
+@@ -229,7 +217,7 @@ QString TOCModel::ConvertHREFToBookPath(const QString &ahref)
+     if (ahref.indexOf(":") != -1) return ahref;
+     // split off any fragment
+     NCXResource* ncxres = m_Book->GetNCX();
+-    QStringList pieces = ahref.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList pieces = ahref.split('#', Qt::KeepEmptyParts);
+     QString basepath = pieces.at(0);
+     QString fragment = "";
+     if (pieces.size() > 1) fragment = pieces.at(1);
+diff --git a/src/MainUI/TableOfContents.cpp b/src/MainUI/TableOfContents.cpp
+index 543cc94b9..eeebaf750 100644
+--- a/src/MainUI/TableOfContents.cpp
++++ b/src/MainUI/TableOfContents.cpp
+@@ -38,14 +38,6 @@
+ #include "ResourceObjects/NCXResource.h"
+ #include "sigil_exception.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const int COLUMN_INDENTATION = 15;
+ static const int REFRESH_DELAY = 1000;
+ 
+@@ -156,7 +148,7 @@ void TableOfContents::RenumberTOCContents()
+ void TableOfContents::ItemClickedHandler(const QModelIndex &index)
+ {
+     QString bookpath = m_TOCModel->GetBookPathForIndex(index);
+-    QStringList pieces = bookpath.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList pieces = bookpath.split('#', Qt::KeepEmptyParts);
+     QString dest_bkpath = Utility::URLDecodePath(pieces.at(0));
+     QString fragment = "";
+     if (pieces.size() > 1) fragment = Utility::URLDecodePath(pieces.at(1));
+diff --git a/src/Misc/FindReplaceQLineEdit.cpp b/src/Misc/FindReplaceQLineEdit.cpp
+index f26a7cd74..0684587f4 100644
+--- a/src/Misc/FindReplaceQLineEdit.cpp
++++ b/src/Misc/FindReplaceQLineEdit.cpp
+@@ -41,11 +41,7 @@ FindReplaceQLineEdit::FindReplaceQLineEdit(QWidget *parent)
+       m_searchMapper(new QSignalMapper(this)),
+       m_tokeniseEnabled(true)
+ {
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    connect(m_searchMapper, SIGNAL(mapped(const QString &)), m_FindReplace, SLOT(LoadSearchByName(const QString &)));
+-#else
+     connect(m_searchMapper, SIGNAL(mappedString(const QString &)), m_FindReplace, SLOT(LoadSearchByName(const QString &)));
+-#endif
+ }
+ 
+ FindReplaceQLineEdit::~FindReplaceQLineEdit()
+diff --git a/src/Misc/Plugin.cpp b/src/Misc/Plugin.cpp
+index c26d0e9d8..1005fa676 100644
+--- a/src/Misc/Plugin.cpp
++++ b/src/Misc/Plugin.cpp
+@@ -1,6 +1,7 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2014  John Schember <john@nachtimwald.com>
++**  Copyright (C) 2024 Kevin B. Hendricks, Stratford ON Canada
++**  Copyright (C) 2014 John Schember <john@nachtimwald.com>
+ **
+ **  This file is part of Sigil.
+ **
+@@ -33,14 +34,6 @@ static const QString POS = "win";
+ static const QString POS = "unx";
+ #endif
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ Plugin::Plugin()
+ {
+ }
+@@ -108,7 +101,7 @@ bool Plugin::isvalid()
+     return (!m_name.isEmpty()   &&
+             !m_type.isEmpty()   &&
+             (!m_engine.isEmpty() && PluginRunner::SupportedEngines().contains(m_engine)) &&
+-            (m_oslist.isEmpty() || m_oslist.split(',', QT_ENUM_SKIPEMPTYPARTS).contains(POS)));
++            (m_oslist.isEmpty() || m_oslist.split(',', Qt::SkipEmptyParts).contains(POS)));
+ }
+ 
+ QString Plugin::get_name()
+diff --git a/src/Misc/SettingsStore.cpp b/src/Misc/SettingsStore.cpp
+index 1150e373d..8379dd274 100644
+--- a/src/Misc/SettingsStore.cpp
++++ b/src/Misc/SettingsStore.cpp
+@@ -34,11 +34,7 @@
+ 
+ #include "sigil_constants.h"
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+-static const QString SETTINGS_FILE = SIGIL_SETTINGS_FILE;
+-#else
+ static const QString SETTINGS_FILE = SIGIL_V6_SETTINGS_FILE;
+-#endif
+ 
+ static QString SETTINGS_GROUP = "user_preferences";
+ static QString KEY_DEFAULT_METADATA_LANGUAGE = SETTINGS_GROUP + "/" + "default_metadata_lang";
+diff --git a/src/Misc/SpellCheck.cpp b/src/Misc/SpellCheck.cpp
+index 06981f5c3..d7221644f 100644
+--- a/src/Misc/SpellCheck.cpp
++++ b/src/Misc/SpellCheck.cpp
+@@ -470,9 +470,6 @@ void SpellCheck::addToUserDictionary(const QString &word, QString dict_name)
+         // Try to open the file to add the word.
+         if (userDictFile.open(QIODevice::Append)) {
+             QTextStream userDictStream(&userDictFile);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-            userDictStream.setCodec("UTF-8");
+-#endif
+             userDictStream << word << "\n";
+             userDictFile.close();
+         }
+@@ -500,9 +497,6 @@ QStringList SpellCheck::userDictionaryWords(QString dict_name)
+ 
+     if (userDictFile.open(QIODevice::ReadOnly)) {
+         QTextStream userDictStream(&userDictFile);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        userDictStream.setCodec("UTF-8");
+-#endif
+         QString line;
+ 
+         do {
+@@ -527,9 +521,6 @@ void SpellCheck::dicDeltaWords(const QString &delta_path, QStringList & word_lis
+     QFile deltaFile(delta_path);
+     if (deltaFile.open(QIODevice::ReadOnly)) {
+         QTextStream deltaStream(&deltaFile);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        deltaStream.setCodec("UTF-8");
+-#endif
+         QString line;
+         do {
+             line = deltaStream.readLine();
+diff --git a/src/Misc/UILanguage.cpp b/src/Misc/UILanguage.cpp
+index abdfd4946..79a0a203c 100644
+--- a/src/Misc/UILanguage.cpp
++++ b/src/Misc/UILanguage.cpp
+@@ -1,6 +1,7 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2011  John Schember <john@nachtimwald.com>
++**  Copyright (C) 2024 Kevin B. Hendricks, Statford ON Canada
++**  Copyright (C) 2011 John Schember <john@nachtimwald.com>
+ **
+ **  This file is part of Sigil.
+ **
+@@ -19,10 +20,10 @@
+ **
+ *************************************************************************/
+ 
+-#include <QtCore/QDir>
+-#include <QtCore/QCoreApplication>
+-#include <QtCore/QLibraryInfo>
+-#include <QtCore/QString>
++#include <QDir>
++#include <QCoreApplication>
++#include <QLibraryInfo>
++#include <QString>
+ #include "Misc/UILanguage.h"
+ #include "sigil_constants.h"
+ 
+@@ -47,11 +48,7 @@ QStringList UILanguage::GetPossibleTranslationPaths()
+     }
+ #endif
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    possible_qm_locations.append(QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+-#else
+     possible_qm_locations.append(QLibraryInfo::path(QLibraryInfo::TranslationsPath));
+-#endif
+ 
+ #ifdef Q_OS_MAC
+     possible_qm_locations.append(QCoreApplication::applicationDirPath() + "/../translations");
+diff --git a/src/Misc/URLSchemeHandler.cpp b/src/Misc/URLSchemeHandler.cpp
+index 070adcfd5..9f31682a3 100644
+--- a/src/Misc/URLSchemeHandler.cpp
++++ b/src/Misc/URLSchemeHandler.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2020-2023  Kevin B. Hendricks, Stratford, ON, Canada
++**  Copyright (C) 2020-2024  Kevin B. Hendricks, Stratford, ON, Canada
+ **
+ **  This file is part of Sigil.
+ **
+@@ -49,9 +49,7 @@ void URLSchemeHandler::requestStarted(QWebEngineUrlRequestJob *request)
+ {
+     DBG qDebug() << "In URLSchemeHandler with url: " << request->requestUrl();
+     DBG qDebug() << "In URLSchemeHandler with method: " << request->requestMethod();
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     DBG qDebug() << "In URLSchemeHandler with initiator: " << request->initiator();
+-#endif
+ 
+     QUrl url = request->requestUrl();
+     QByteArray data;
+diff --git a/src/Misc/Utility.cpp b/src/Misc/Utility.cpp
+index f18ff8427..a8a940756 100644
+--- a/src/Misc/Utility.cpp
++++ b/src/Misc/Utility.cpp
+@@ -75,14 +75,6 @@
+ #include "MainUI/MainApplication.h"
+ #include "Parsers/QuickParser.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const QString URL_SAFE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.-/~";
+ 
+ static const QString DARK_STYLE =
+@@ -127,11 +119,7 @@ QString Utility::DefinePrefsDir()
+     if (!SIGIL_PREFS_DIR.isEmpty()) {
+         return SIGIL_PREFS_DIR;
+     } else {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+-#else
+         return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+-#endif
+     }
+ }
+ 
+@@ -548,9 +536,6 @@ QString Utility::ReadUnicodeTextFile(const QString &fullfilepath)
+ 
+     QTextStream in(&file);
+     // Input should be UTF-8
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    in.setCodec("UTF-8");
+-#endif
+     // This will automatically switch reading from
+     // UTF-8 to UTF-16 if a BOM is detected
+     in.setAutoDetectUnicode(true);
+@@ -575,9 +560,6 @@ void Utility::WriteUnicodeTextFile(const QString &text, const QString &fullfilep
+ 
+     QTextStream out(&file);
+     // We ALWAYS output in UTF-8
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    out.setCodec("UTF-8");
+-#endif
+     out << text;
+ }
+ 
+@@ -663,11 +645,7 @@ QString Utility::URLEncodePath(const QString &path)
+     QVector<uint32_t> codepoints = newpath.toUcs4();
+     for (int i = 0; i < codepoints.size(); i++) {
+         uint32_t cp = codepoints.at(i);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        QString s = QString::fromUcs4(&cp, 1);
+-#else
+         QString s = QString::fromUcs4(reinterpret_cast<char32_t *>(&cp), 1);
+-#endif
+         if (NeedToPercentEncode(cp)) {
+             QByteArray b = s.toUtf8();
+             for (int j = 0; j < b.size(); j++) {
+@@ -777,15 +755,10 @@ void Utility::DisplayStdWarningDialog(const QString &warning_message, const QStr
+ // if the env var isn't set, it returns an empty string
+ QString Utility::GetEnvironmentVar(const QString &variable_name)
+ {
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+     // The only time this might fall down is on Linux when an
+     // environment variable holds bytedata. Don't use this
+     // utility function for retrieval if that's the case.
+     return qEnvironmentVariable(variable_name.toUtf8().constData(), "").trimmed();
+-#else
+-    // This will typically only be used on older Qts on Linux
+-    return QProcessEnvironment::systemEnvironment().value(variable_name, "").trimmed();
+-#endif
+ }
+ 
+ 
+@@ -849,13 +822,8 @@ std::wstring Utility::QStringToStdWString(const QString &str)
+ 
+ QString Utility::stdWStringToQString(const std::wstring &str)
+ {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    return QString::fromUtf16((const ushort *)str.c_str());
+-#else
+     return QString::fromUtf16(reinterpret_cast<const char16_t*>((const ushort *)str.c_str()));
+-#endif
+ }
+-#endif
+ 
+ 
+ bool Utility::UnZip(const QString &zippath, const QString &destpath)
+@@ -1116,8 +1084,8 @@ QString Utility::relativePath(const QString & destination, const QString & start
+     while (dest.endsWith(sep)) dest.chop(1);
+     while (start.endsWith(sep)) start.chop(1);
+ 
+-    QStringList dsegs = dest.split(sep, QT_ENUM_KEEPEMPTYPARTS);
+-    QStringList ssegs = start.split(sep, QT_ENUM_KEEPEMPTYPARTS);
++    QStringList dsegs = dest.split(sep,  Qt::KeepEmptyParts);
++    QStringList ssegs = start.split(sep,  Qt::KeepEmptyParts);
+     QStringList res;
+     int i = 0;
+     int nd = dsegs.size();
+diff --git a/src/Misc/WebProfileMgr.cpp b/src/Misc/WebProfileMgr.cpp
+index 835c41b74..979d3c8e3 100644
+--- a/src/Misc/WebProfileMgr.cpp
++++ b/src/Misc/WebProfileMgr.cpp
+@@ -77,20 +77,12 @@ void WebProfileMgr::InitializeDefaultSettings(QWebEngineSettings* web_settings)
+     web_settings->setAttribute(QWebEngineSettings::AllowGeolocationOnInsecureOrigins, false);
+     web_settings->setAttribute(QWebEngineSettings::ScreenCaptureEnabled, false);
+     web_settings->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+     web_settings->setAttribute(QWebEngineSettings::AllowWindowActivationFromJavaScript, false);
+-#endif
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     web_settings->setUnknownUrlSchemePolicy(QWebEngineSettings::DisallowUnknownUrlSchemes);
+     web_settings->setAttribute(QWebEngineSettings::PlaybackRequiresUserGesture, true);
+     web_settings->setAttribute(QWebEngineSettings::JavascriptCanPaste, false);
+-#endif
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+     web_settings->setAttribute(QWebEngineSettings::DnsPrefetchEnabled, false);
+-#endif
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     web_settings->setAttribute(QWebEngineSettings::PdfViewerEnabled, false);
+-#endif
+ }
+ 
+ 
+@@ -101,18 +93,10 @@ WebProfileMgr::WebProfileMgr()
+     m_URLint = new URLInterceptor();
+     
+     // initialize the defaultProfile to be restrictive for security
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QWebEngineSettings *web_settings = QWebEngineSettings::defaultSettings();
+-#else
+     QWebEngineSettings *web_settings = QWebEngineProfile::defaultProfile()->settings();
+-#endif
+     InitializeDefaultSettings(web_settings);
+     // Use URLInterceptor for protection
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     QWebEngineProfile::defaultProfile()->setUrlRequestInterceptor(m_URLint);
+-#else
+-    QWebEngineProfile::defaultProfile()->setRequestInterceptor(m_URLint);
+-#endif
+ 
+     // create the profile for Preview
+     SettingsStore ss;
+@@ -121,9 +105,7 @@ WebProfileMgr::WebProfileMgr()
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::ErrorPageEnabled, false);
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::PdfViewerEnabled, true);
+-#endif
+     m_preview_profile->settings()->setDefaultTextEncoding("UTF-8");  
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, (ss.javascriptOn() == 1));
+     m_preview_profile->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, (ss.javascriptOn() == 1));
+@@ -139,11 +121,7 @@ WebProfileMgr::WebProfileMgr()
+     m_preview_profile->setPersistentStoragePath(localStorePath);
+     // Use both our URLInterceptor and our URLSchemeHandler
+     m_preview_profile->installUrlSchemeHandler("sigil", m_URLhandler);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     m_preview_profile->setUrlRequestInterceptor(m_URLint);
+-#else
+-    m_preview_profile->setRequestInterceptor(m_URLint);
+-#endif
+ 
+     // create the profile for OneTime
+     m_onetime_profile = new QWebEngineProfile();
+@@ -151,19 +129,13 @@ WebProfileMgr::WebProfileMgr()
+     m_onetime_profile->settings()->setDefaultTextEncoding("UTF-8");  
+     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
+     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::PdfViewerEnabled, true);
+-#endif
+     // Unfortunately the PdfView used for PdfTab now requires both java and LocalStorage work
+     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, (ss.javascriptOn() == 1));
+     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
+     m_onetime_profile->setPersistentStoragePath(localStorePath);
+     // Use URLInterceptor for protection
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+     m_onetime_profile->setUrlRequestInterceptor(m_URLint);
+-#else
+-    m_onetime_profile->setRequestInterceptor(m_URLint);
+-#endif
+ 
+ }
+ 
+diff --git a/src/Misc/webviewprinter.cpp b/src/Misc/webviewprinter.cpp
+index 1c1fbfcad..56e25b4f0 100644
+--- a/src/Misc/webviewprinter.cpp
++++ b/src/Misc/webviewprinter.cpp
+@@ -1,6 +1,6 @@
+ /****************************************************************************
+ **
+-**  Copyright (C) 2023  Doug Massay
++**  Copyright (C) 2023-2024  Doug Massay
+ **
+ **  This file is part of Sigil.
+ **
+@@ -111,12 +111,8 @@ void WebViewPrinter::printDocument(QPrinter *printer)
+     QEventLoop loop;
+     bool result;
+     auto printCallback = [&](bool success) { result = success; loop.quit(); };
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    m_viewprev->page()->print(printer, std::move(printCallback));
+-#else
+     connect(m_viewprev, &ViewPreview::printFinished, std::move(printCallback)); 
+     m_viewprev->print(printer);
+-#endif    
+     loop.exec();
+     if (!result) {
+         DBG qDebug() << "Could not print document.";
+diff --git a/src/MiscEditors/ClipEditorModel.cpp b/src/MiscEditors/ClipEditorModel.cpp
+index 21717889d..43938aefe 100644
+--- a/src/MiscEditors/ClipEditorModel.cpp
++++ b/src/MiscEditors/ClipEditorModel.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2018-2022 Kevin B. Hendricks, Stratford, Ontario
++**  Copyright (C) 2018-2024 Kevin B. Hendricks, Stratford, Ontario
+ **  Copyright (C) 2012 John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012 Dave Heiland
+ **  Copyright (C) 2012 Grant Drake
+@@ -33,19 +33,7 @@
+ #include "Misc/Utility.h"
+ #include "sigil_constants.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+-static const QString SETTINGS_FILE = CLIPS_SETTINGS_FILE;
+-#else
+ static const QString SETTINGS_FILE = CLIPS_V6_SETTINGS_FILE;
+-#endif
+ 
+ static const QString SETTINGS_GROUP         = "clip_entries";
+ static const QString ENTRY_NAME             = "Name";
+@@ -387,7 +375,7 @@ void ClipEditorModel::AddFullNameEntry(ClipEditorModel::clipEntry *entry, QStand
+     QString entry_name = entry->name;
+ 
+     if (entry->name.contains("/")) {
+-        QStringList group_names = entry->name.split("/", QT_ENUM_SKIPEMPTYPARTS);
++        QStringList group_names = entry->name.split("/", Qt::SkipEmptyParts);
+         entry_name = group_names.last();
+ 
+         if (!entry->is_group) {
+diff --git a/src/MiscEditors/IndexEditorModel.cpp b/src/MiscEditors/IndexEditorModel.cpp
+index 0146142dc..1c05f4a9e 100644
+--- a/src/MiscEditors/IndexEditorModel.cpp
++++ b/src/MiscEditors/IndexEditorModel.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2021 Kevin B. Hendricks, Stratford, Ontario, Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford, Ontario, Canada
+ **  Copyright (C) 2012      John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012      Dave Heiland
+ **
+@@ -31,11 +31,7 @@
+ #include "Misc/Utility.h"
+ #include "MiscEditors/IndexEditorModel.h"
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+-static const QString SETTINGS_FILE = INDEX_SETTINGS_FILE;
+-#else
+ static const QString SETTINGS_FILE = INDEX_V6_SETTINGS_FILE;
+-#endif
+ 
+ static const QString SETTINGS_GROUP         = "index_entries";
+ static const QString ENTRY_PATTERN          = "Text to Include";
+diff --git a/src/MiscEditors/IndexEntries.cpp b/src/MiscEditors/IndexEntries.cpp
+index bf390e782..42f601ae1 100644
+--- a/src/MiscEditors/IndexEntries.cpp
++++ b/src/MiscEditors/IndexEntries.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2020 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **  Copyright (C) 2012      John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012      Dave Heiland
+ **
+@@ -25,14 +25,6 @@
+ #include "MiscEditors/IndexEntries.h"
+ #include "MiscEditors/IndexEditorModel.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ IndexEntries *IndexEntries::m_instance = 0;
+ 
+ IndexEntries *IndexEntries::instance()
+@@ -66,7 +58,7 @@ QStandardItem *IndexEntries::GetRootItem()
+ void IndexEntries::AddOneEntry(QString text, QString bookpath, QString index_id_value)
+ {
+     QStandardItem *parent_item = m_BookIndexRootItem;
+-    QStringList names = text.split("/", QT_ENUM_SKIPEMPTYPARTS);
++    QStringList names = text.split("/", Qt::SkipEmptyParts);
+     names.append(Utility::URLEncodePath(bookpath) + "#" +  Utility::URLEncodePath(index_id_value));
+     // Add names in hierarchy
+     foreach(QString name, names) {
+diff --git a/src/MiscEditors/SearchEditorModel.cpp b/src/MiscEditors/SearchEditorModel.cpp
+index 1e4aca37a..742d995a6 100644
+--- a/src/MiscEditors/SearchEditorModel.cpp
++++ b/src/MiscEditors/SearchEditorModel.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2022 Kevin B. Hendricks, Stratford, Ontario, Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford, Ontario, Canada
+ **  Copyright (C) 2012 John Schember <john@nachtimwald.com>
+ **  Copyright (C) 2012 Dave Heiland
+ **  Copyright (C) 2012 Grant Drake
+@@ -36,19 +36,7 @@
+ #include "sigil_constants.h"
+ #include "sigil_exception.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+-#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
+-static const QString SETTINGS_FILE = SEARCHES_V2_SETTINGS_FILE;
+-#else
+ static const QString SETTINGS_FILE = SEARCHES_V6_SETTINGS_FILE;
+-#endif
+ 
+ static const QString SETTINGS_GROUP         = "search_entries";
+ static const QString ENTRY_NAME             = "Name";
+@@ -413,7 +401,7 @@ void SearchEditorModel::AddFullNameEntry(SearchEditorModel::searchEntry *entry,
+     QString entry_name = entry->name;
+ 
+     if (entry->name.contains("/")) {
+-        QStringList group_names = entry->name.split("/", QT_ENUM_SKIPEMPTYPARTS);
++        QStringList group_names = entry->name.split("/", Qt::SkipEmptyParts);
+         entry_name = group_names.last();
+ 
+         if (!entry->is_group) {
+diff --git a/src/PCRE2/PCREReplaceTextBuilder.cpp b/src/PCRE2/PCREReplaceTextBuilder.cpp
+index 235469902..988ccc2fe 100644
+--- a/src/PCRE2/PCREReplaceTextBuilder.cpp
++++ b/src/PCRE2/PCREReplaceTextBuilder.cpp
+@@ -251,11 +251,7 @@ bool PCREReplaceTextBuilder::BuildReplacementText(SPCRE &sre,
+                             QString remainder = control_x6_hex.right(4);
+                             achar = remainder.toUInt(NULL, 16);
+                             achar = (65536 * extended_plane.toUInt(NULL, 16)) + achar;
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-                            accumulateReplcementText(QString::fromUcs4(&achar, 1));
+-#else
+                             accumulateReplcementText(QString::fromUcs4(reinterpret_cast<char32_t*>(&achar), 1));
+-#endif
+                         }
+                         in_control = false;
+                         in_hex6 = false;
+diff --git a/src/PCRE2/SPCRE.cpp b/src/PCRE2/SPCRE.cpp
+index 6a479073f..fad22d235 100644
+--- a/src/PCRE2/SPCRE.cpp
++++ b/src/PCRE2/SPCRE.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2021-2023  Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2021-2024  Kevin B. Hendricks, Stratford Ontario Canada
+ **  Copyright (C) 2011  John Schember <john@nachtimwald.com>
+ **
+ **  This file is part of Sigil.
+@@ -77,11 +77,7 @@ SPCRE::SPCRE(const QString &patten)
+         m_valid = false;
+         PCRE2_UCHAR16 buffer[256];
+         pcre2_get_error_message_16(errorno, buffer, sizeof(buffer));
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-        m_error = QString::fromUtf16(buffer);
+-#else
+         m_error = QString::fromUtf16(reinterpret_cast<char16_t*>(buffer));
+-#endif
+         m_errpos = (int) erroroffset;
+         // qDebug() << "SPCRE invalid pattern: " << m_pattern;
+         // qDebug() << "SPCRE error: " << m_error;
+diff --git a/src/Parsers/GumboInterface.cpp b/src/Parsers/GumboInterface.cpp
+index fec5fd0a6..13841f4dd 100644
+--- a/src/Parsers/GumboInterface.cpp
++++ b/src/Parsers/GumboInterface.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2023  Kevin B. Hendricks, Stratford Ontario
++**  Copyright (C) 2015-2024  Kevin B. Hendricks, Stratford Ontario
+ **
+ **  This file is part of Sigil.
+ **
+@@ -35,14 +35,6 @@
+ #include "string_buffer.h"
+ #include "error.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static std::unordered_set<std::string> nonbreaking_inline  = { 
+     "a","abbr","acronym","b","bdo","big","br","button","cite","code","del",
+     "dfn","em","font","i","image","img","input","ins","kbd","label","map",
+@@ -530,7 +522,7 @@ QString GumboInterface::get_qwebpath_to_node(GumboNode* node)
+ 
+ GumboNode* GumboInterface::get_node_from_qwebpath(QString webpath) 
+ {
+-    QStringList path_pieces = webpath.split(",", QT_ENUM_SKIPEMPTYPARTS);
++    QStringList path_pieces = webpath.split(",", Qt::SkipEmptyParts);
+     GumboNode* node = get_root_node();
+     GumboNode* end_node = node;
+     for (int i=0; i < path_pieces.count() - 1 ; ++i) {
+diff --git a/src/Parsers/HTMLStyleInfo.cpp b/src/Parsers/HTMLStyleInfo.cpp
+index 3368159ea..2b5de64ed 100644
+--- a/src/Parsers/HTMLStyleInfo.cpp
++++ b/src/Parsers/HTMLStyleInfo.cpp
+@@ -25,14 +25,6 @@
+ #include "Parsers/CSSInfo.h"
+ #include "Parsers/HTMLStyleInfo.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const int TAB_SPACES_WIDTH = 4;
+ static const QString LINE_MARKER("[SIGIL_NEWLINE]");
+ static const QString DELIMITERS = "}{;";
+@@ -169,13 +161,13 @@ QList<HTMLStyleInfo::CSSProperty> HTMLStyleInfo::getCSSProperties(const QString
+     }
+ 
+     const QString &style_text = text.mid(styleTextStartPos, styleTextEndPos - styleTextStartPos);
+-    QStringList properties = style_text.split(QChar(';'), QT_ENUM_SKIPEMPTYPARTS);
++    QStringList properties = style_text.split(QChar(';'), Qt::SkipEmptyParts);
+     foreach(QString property_text, properties) {
+         if (property_text.trimmed().isEmpty()) {
+             continue;
+         }
+ 
+-        QStringList name_values = property_text.split(QChar(':'), QT_ENUM_SKIPEMPTYPARTS);
++        QStringList name_values = property_text.split(QChar(':'), Qt::SkipEmptyParts);
+         HTMLStyleInfo::CSSProperty css_property;
+ 
+         // Any badly formed CSS or stuff we don't "understand" like pre-processing we leave as is
+diff --git a/src/ResourceObjects/NavProcessor.cpp b/src/ResourceObjects/NavProcessor.cpp
+index 594df3b3c..2035acb10 100644
+--- a/src/ResourceObjects/NavProcessor.cpp
++++ b/src/ResourceObjects/NavProcessor.cpp
+@@ -34,14 +34,6 @@
+ #include "ResourceObjects/Resource.h"
+ #include "ResourceObjects/NavProcessor.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const QString NAV_PAGELIST_PATTERN = "\\s*<!--\\s*SIGIL_REPLACE_PAGELIST_HERE\\s*-->\\s*";
+ static const QString NAV_LANDMARKS_PATTERN = "\\s*<!--\\s*SIGIL_REPLACE_LANDMARKS_HERE\\s*-->\\s*";
+ static const QString NAV_TOC_PATTERN = "\\s*<!--\\s*SIGIL_REPLACE_TOC_HERE\\s*-->\\s*";
+@@ -551,7 +543,7 @@ int NavProcessor::GetResourceLandmarkPos(const Resource *resource, const QList<N
+     for (int i=0; i < landlist.count(); ++i) {
+         NavLandmarkEntry le = landlist.at(i);
+         QString href = ConvertHREFToBookPath(le.href);
+-        QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++        QStringList parts = href.split('#', Qt::KeepEmptyParts);
+         if (parts.at(0) == resource_book_path) {
+             return i;
+         }
+@@ -589,7 +581,7 @@ QHash <QString, QString> NavProcessor::GetLandmarkNameForPaths()
+     QHash <QString, QString> semantic_types;
+     foreach(NavLandmarkEntry le, landlist) {
+         QString href = ConvertHREFToBookPath(le.href);
+-        QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++        QStringList parts = href.split('#', Qt::KeepEmptyParts);
+         QString etype = le.etype;
+         semantic_types[parts.at(0)] = Landmarks::instance()->GetName(etype);
+     }
+@@ -603,7 +595,7 @@ QHash <QString, QString> NavProcessor::GetLandmarkCodeForPaths()
+   QHash <QString, QString> semantic_types;
+   foreach(NavLandmarkEntry le, landlist) {
+     QString href = ConvertHREFToBookPath(le.href);
+-    QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList parts = href.split('#', Qt::KeepEmptyParts);
+     QString etype = le.etype;
+     semantic_types[parts.at(0)] = etype;
+   }
+@@ -768,7 +760,7 @@ QString NavProcessor::ConvertHREFToBookPath(const QString & nav_rel_href)
+     QString bookpath;
+     if (nav_rel_href.indexOf(":") != -1) return nav_rel_href;
+     // split off any fragment
+-    QStringList pieces = nav_rel_href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList pieces = nav_rel_href.split('#', Qt::KeepEmptyParts);
+     QString basepath = Utility::URLDecodePath(pieces.at(0));
+     QString fragment = "";
+     if (pieces.size() > 1) fragment = pieces.at(1);
+@@ -791,7 +783,7 @@ QString NavProcessor::ConvertBookPathToNavRelative(const QString & bookpath)
+ {
+     QString nav_bkpath = m_NavResource->GetRelativePath();
+     // split off any fragment added to bookpath destination
+-    QStringList pieces = bookpath.split('#', QT_ENUM_KEEPEMPTYPARTS);
++    QStringList pieces = bookpath.split('#', Qt::KeepEmptyParts);
+     QString dest_bkpath = Utility::URLDecodePath(pieces.at(0));
+     QString fragment = "";
+     if (pieces.size() > 1) fragment = pieces.at(1);
+diff --git a/src/ResourceObjects/OPFResource.cpp b/src/ResourceObjects/OPFResource.cpp
+index 65b588eba..ead7c66c5 100644
+--- a/src/ResourceObjects/OPFResource.cpp
++++ b/src/ResourceObjects/OPFResource.cpp
+@@ -49,14 +49,6 @@
+ #include "sigil_constants.h"
+ #include "sigil_exception.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ static const QString MEDIA_PLAYBACK_ACTIVE_CLASS = "media:playback-active-class";
+ static const QString MEDIA_ACTIVE_CLASS          = "media:active-class";
+ static const QString SIGIL_VERSION_META_NAME  = "Sigil version";
+@@ -900,7 +892,7 @@ int OPFResource::GetGuideReferenceForResourcePos(const Resource *resource, const
+     for (int i=0; i < p.m_guide.count(); ++i) {
+         GuideEntry ge = p.m_guide.at(i);
+         QString href = ge.m_href;
+-        QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++        QStringList parts = href.split('#', Qt::KeepEmptyParts);
+         if (parts.at(0) == href_to_resource_from_opf) {
+             return i;
+         }
+@@ -1054,7 +1046,7 @@ QHash <QString, QString>  OPFResource::GetSemanticCodeForPaths()
+     QHash <QString, QString> semantic_types;
+     foreach(GuideEntry ge, p.m_guide) {
+         QString href = ge.m_href;
+-        QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++        QStringList parts = href.split('#', Qt::KeepEmptyParts);
+         QString apath = Utility::URLDecodePath(parts.at(0));
+         QString bkpath = Utility::buildBookPath(apath, GetFolder());
+         QString gtype = ge.m_type;
+@@ -1074,7 +1066,7 @@ QHash <QString, QString>  OPFResource::GetGuideSemanticNameForPaths()
+     QHash <QString, QString> semantic_types;
+     foreach(GuideEntry ge, p.m_guide) {
+         QString href = ge.m_href;
+-        QStringList parts = href.split('#', QT_ENUM_KEEPEMPTYPARTS);
++        QStringList parts = href.split('#', Qt::KeepEmptyParts);
+         QString gtype = ge.m_type;
+         QString apath = Utility::URLDecodePath(parts.at(0));
+         QString bkpath = Utility::buildBookPath(apath, GetFolder());
+diff --git a/src/SourceUpdates/UniversalUpdates.cpp b/src/SourceUpdates/UniversalUpdates.cpp
+index a6c5833f3..24a5526ae 100644
+--- a/src/SourceUpdates/UniversalUpdates.cpp
++++ b/src/SourceUpdates/UniversalUpdates.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2021  Kevin B. Hendricks  Stratford, Ontario Canada
++**  Copyright (C) 2015-2024  Kevin B. Hendricks  Stratford, Ontario Canada
+ **  Copyright (C) 2009-2011  Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -94,13 +94,7 @@ QStringList UniversalUpdates::PerformUniversalUpdates(bool resources_already_loa
+         html_future = QtConcurrent::mapped(html_resources, std::bind(LoadAndUpdateOneHTMLFile, std::placeholders::_1, html_updates, css_updates, non_well_formed));
+         css_future = QtConcurrent::map(css_resources,  std::bind(LoadAndUpdateOneCSSFile,  std::placeholders::_1, css_updates));
+     }
+-
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)    
+-    sync.addFuture(html_future);
+-#else
+     sync.addFuture(QFuture<void>(html_future));
+-#endif    
+-    
+     sync.addFuture(css_future);
+ 
+     // We can't schedule these with QtConcurrent because they
+diff --git a/src/Tabs/ImageTab.cpp b/src/Tabs/ImageTab.cpp
+index 5b779b249..abf4ca7d0 100644
+--- a/src/Tabs/ImageTab.cpp
++++ b/src/Tabs/ImageTab.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2015-2023 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2015-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
+ **
+ **  This file is part of Sigil.
+@@ -50,13 +50,8 @@
+ #include "sigil_constants.h"
+ #include "Tabs/ImageTab.h"
+ 
+-
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    static const QVariant QVINVALID = QVariant(QVariant::Invalid);
+-#else 
+-    #include <QMetaType>
+-    static const QVariant QVINVALID = QVariant(QMetaType(QMetaType::UnknownType));
+-#endif
++#include <QMetaType>
++static const QVariant QVINVALID = QVariant(QMetaType(QMetaType::UnknownType));
+ 
+ 
+ const QString IMAGE_HTML_BASE =
+@@ -422,11 +417,7 @@ void ImageTab::ConnectSignalsToSlots()
+     connect(m_OpenWithEditor4, SIGNAL(triggered()),  m_openWithMapper, SLOT(map()));
+     m_openWithMapper->setMapping(m_OpenWithEditor4, 4);
+ 
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+-    connect(m_openWithMapper, SIGNAL(mapped(int)),   this, SLOT(openWithEditor(int)));
+-#else
+     connect(m_openWithMapper, SIGNAL(mappedInt(int)),   this, SLOT(openWithEditor(int)));
+-#endif
+     connect(m_SaveAs,         SIGNAL(triggered()),   this, SLOT(saveAs()));
+     connect(m_CopyImage,      SIGNAL(triggered()),   this, SLOT(copyImage()));
+ }
+diff --git a/src/ViewEditors/CodeViewEditor.cpp b/src/ViewEditors/CodeViewEditor.cpp
+index 1f6ae0c59..d7b35d3ad 100644
+--- a/src/ViewEditors/CodeViewEditor.cpp
++++ b/src/ViewEditors/CodeViewEditor.cpp
+@@ -68,14 +68,6 @@
+ #include "ViewEditors/LineNumberArea.h"
+ #include "sigil_constants.h"
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ const int PROGRESS_BAR_MINIMUM_DURATION = 1000;
+ const QString BREAK_TAG_INSERT    = "<hr class=\"sigil_split_marker\" />";
+ 
+@@ -691,12 +683,7 @@ int CodeViewEditor::CalculateLineNumberAreaWidth()
+         num_digits++;
+     }
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     return LINE_NUMBER_MARGIN * 2 + fontMetrics().horizontalAdvance(QChar('0')) * num_digits;
+-#else
+-    return LINE_NUMBER_MARGIN * 2 + fontMetrics().width(QChar('0')) * num_digits;
+-#endif
+-
+ }
+ 
+ 
+@@ -2569,11 +2556,7 @@ void CodeViewEditor::ResetFont()
+     // But just in case, say we want a fixed width font if font is not present
+     font.setStyleHint(QFont::TypeWriter);
+     setFont(font);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     setTabStopDistance(TAB_SPACES_WIDTH * QFontMetrics(font).horizontalAdvance(' '));
+-#else
+-    setTabStopWidth(TAB_SPACES_WIDTH * QFontMetrics(font).width(' '));
+-#endif
+     UpdateLineNumberAreaFont(font);
+ }
+ 
+@@ -3783,7 +3766,7 @@ void CodeViewEditor::ApplyListToSelection(const QString &element)
+         new_text = new_text.trimmed();
+         // now split remaining text by new lines and 
+         // remove any beginning and ending li tags
+-        QStringList alist = new_text.split(QChar::ParagraphSeparator, QT_ENUM_SKIPEMPTYPARTS);
++        QStringList alist = new_text.split(QChar::ParagraphSeparator, Qt::SkipEmptyParts);
+         QStringList result;
+         foreach(QString aitem, alist) {
+             result.append(indent + RemoveLastTag(RemoveFirstTag(aitem,"li"), "li"));
+@@ -3792,7 +3775,7 @@ void CodeViewEditor::ApplyListToSelection(const QString &element)
+         new_text = result.join("\n");
+     }
+     else if ((tagname == "p") || tagname.isEmpty()) {
+-        QStringList alist = new_text.split(QChar::ParagraphSeparator, QT_ENUM_SKIPEMPTYPARTS);
++        QStringList alist = new_text.split(QChar::ParagraphSeparator, Qt::SkipEmptyParts);
+         QStringList result;
+         result.append(indent + "<" + element + ">");
+         foreach(QString aitem, alist) {
+@@ -3993,17 +3976,9 @@ void CodeViewEditor::ConnectSignalsToSlots()
+     connect(this, SIGNAL(selectionChanged()), this, SLOT(ResetLastFindMatch()));
+     connect(m_ScrollOneLineUp,   SIGNAL(activated()), this, SLOT(ScrollOneLineUp()));
+     connect(m_ScrollOneLineDown, SIGNAL(activated()), this, SLOT(ScrollOneLineDown()));
+-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0) 
+-    connect(m_spellingMapper, SIGNAL(mapped(const QString &)), this, SLOT(InsertText(const QString &)));
+-    connect(m_addSpellingMapper, SIGNAL(mapped(const QString &)), this, SLOT(addToDefaultDictionary(const QString &)));
+-    connect(m_addDictMapper, SIGNAL(mapped(const QString &)), this, SLOT(addToUserDictionary(const QString &)));
+-    connect(m_ignoreSpellingMapper, SIGNAL(mapped(const QString &)), this, SLOT(ignoreWord(const QString &)));
+-    connect(m_clipMapper, SIGNAL(mapped(const QString &)), this, SLOT(PasteClipEntryFromName(const QString &)));
+-#else
+     connect(m_spellingMapper, SIGNAL(mappedString(const QString &)), this, SLOT(InsertText(const QString &)));
+     connect(m_addSpellingMapper, SIGNAL(mappedString(const QString &)), this, SLOT(addToDefaultDictionary(const QString &)));
+     connect(m_addDictMapper, SIGNAL(mappedString(const QString &)), this, SLOT(addToUserDictionary(const QString &)));
+     connect(m_ignoreSpellingMapper, SIGNAL(mappedString(const QString &)), this, SLOT(ignoreWord(const QString &)));
+     connect(m_clipMapper, SIGNAL(mappedString(const QString &)), this, SLOT(PasteClipEntryFromName(const QString &)));
+-#endif
+ }
+diff --git a/src/ViewEditors/SimplePage.cpp b/src/ViewEditors/SimplePage.cpp
+index 19ad65d01..e02d5e4f1 100644
+--- a/src/ViewEditors/SimplePage.cpp
++++ b/src/ViewEditors/SimplePage.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2019-2023 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2019-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **
+ **  This file is part of Sigil.
+ **
+@@ -29,8 +29,6 @@ SimplePage::SimplePage(QWebEngineProfile* profile, QObject *parent)
+     : QWebEnginePage(profile, parent)
+ {
+     setBackgroundColor(Utility::WebViewBackgroundColor(true));
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     setUrl(QUrl("about:blank"));
+-#endif
+ }
+ 
+diff --git a/src/ViewEditors/ViewPreview.cpp b/src/ViewEditors/ViewPreview.cpp
+index 8c8e85015..2358e5d04 100644
+--- a/src/ViewEditors/ViewPreview.cpp
++++ b/src/ViewEditors/ViewPreview.cpp
+@@ -49,14 +49,6 @@
+ 
+ #define DBG if(0)
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ const QString SET_CURSOR_JS2 =
+     "var range = document.createRange();"
+     "range.setStart(element, 0);"
+@@ -475,7 +467,7 @@ QList<ElementIndex> ViewPreview::ConvertQWebPathToHierarchy(const QString & webp
+ {
+     // The location element hierarchy encoded in a string
+     QString location_string = webpath;
+-    QStringList elements    = location_string.split(",", QT_ENUM_SKIPEMPTYPARTS);
++    QStringList elements    = location_string.split(",", Qt::SkipEmptyParts);
+     QList<ElementIndex> location;
+     foreach(QString element, elements) {
+         ElementIndex new_element;
+diff --git a/src/ViewEditors/WebEngPage.cpp b/src/ViewEditors/WebEngPage.cpp
+index 2ee603b62..d2bd4fe80 100644
+--- a/src/ViewEditors/WebEngPage.cpp
++++ b/src/ViewEditors/WebEngPage.cpp
+@@ -34,9 +34,7 @@ WebEngPage::WebEngPage(QWebEngineProfile* profile, QObject *parent, bool setback
+     if (setbackground) {
+         setBackgroundColor(Utility::WebViewBackgroundColor(true));
+     }
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)  || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     setUrl(QUrl("about:blank"));
+-#endif
+ #if 0
+     DBG qDebug() << "WebEngPage Life Cycle State: " << lifecycleState();
+     DBG qDebug() << "WebEngPage Current RenderProcess Pid " << renderProcessPid();
+@@ -82,12 +80,10 @@ bool WebEngPage::acceptNavigationRequest(const QUrl & url, QWebEnginePage::Navig
+         DBG qDebug() << "acceptNavigationRequest from scheme handler load" << url.toString();
+         return true;
+     }
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+     if (type == QWebEnginePage::NavigationTypeRedirect) {
+         DBG qDebug() << "acceptNavigationRequest from scheme handler redirect" << url.toString();
+         return true;
+     }
+-#endif
+     qDebug() << " Unhandled acceptNavigationRequest with type: " << type;
+     return true;
+ }
+diff --git a/src/Widgets/AVView.cpp b/src/Widgets/AVView.cpp
+index 2c123e37f..99f555cb5 100644
+--- a/src/Widgets/AVView.cpp
++++ b/src/Widgets/AVView.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+  **
+- **  Copyright (C) 2020-2023 Kevin B. Hendricks
++ **  Copyright (C) 2020-2024 Kevin B. Hendricks
+  **
+  **  This file is part of Sigil.
+  **
+@@ -79,9 +79,7 @@ AVView::AVView(QWidget *parent)
+     m_WebView->setContextMenuPolicy(Qt::NoContextMenu);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     m_WebView->setAcceptDrops(false);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     m_WebView->setUrl(QUrl("about:blank"));
+-#endif
+     m_layout->addWidget(m_WebView);
+ }
+ 
+diff --git a/src/Widgets/FontView.cpp b/src/Widgets/FontView.cpp
+index 3e21677f4..fd8294331 100644
+--- a/src/Widgets/FontView.cpp
++++ b/src/Widgets/FontView.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+  **
+- **  Copyright (C) 2020-2023 Kevin B. Hendricks
++ **  Copyright (C) 2020-2024 Kevin B. Hendricks
+  **
+  **  This file is part of Sigil.
+  **
+@@ -82,9 +82,7 @@ FontView::FontView(QWidget *parent)
+     m_WebView->setContextMenuPolicy(Qt::NoContextMenu);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     m_WebView->setAcceptDrops(false);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     m_WebView->setUrl(QUrl("about:blank"));
+-#endif
+     m_layout->addWidget(m_WebView);
+ }
+ 
+diff --git a/src/Widgets/ImageView.cpp b/src/Widgets/ImageView.cpp
+index cf1a54a22..5bdf439c8 100644
+--- a/src/Widgets/ImageView.cpp
++++ b/src/Widgets/ImageView.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2019-2023 Kevin B. Hendricks
++**  Copyright (C) 2019-2024 Kevin B. Hendricks
+ **  Copyright (C) 2013      Dave Heiland
+ **
+ **  This file is part of Sigil.
+@@ -68,9 +68,7 @@ ImageView::ImageView(QWidget *parent)
+     m_WebView->setContextMenuPolicy(Qt::NoContextMenu);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     m_WebView->setAcceptDrops(false);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)  || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     m_WebView->setUrl(QUrl("about:blank"));
+-#endif
+     m_layout->addWidget(m_WebView);
+ }
+ 
+diff --git a/src/Widgets/PdfView.cpp b/src/Widgets/PdfView.cpp
+index 0ae9e954d..8b2091329 100644
+--- a/src/Widgets/PdfView.cpp
++++ b/src/Widgets/PdfView.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+  **
+- **  Copyright (C) 2023 Kevin B. Hendricks, Stratford, Ontario Canada
++ **  Copyright (C) 2023-2024 Kevin B. Hendricks, Stratford, Ontario Canada
+  **
+  **  This file is part of Sigil.
+  **
+@@ -46,9 +46,7 @@ PdfView::PdfView(QWidget *parent)
+     m_WebView->setContextMenuPolicy(Qt::NoContextMenu);
+     m_WebView->setFocusPolicy(Qt::NoFocus);
+     m_WebView->setAcceptDrops(false);
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+     m_WebView->setUrl(QUrl("about:blank"));
+-#endif
+     m_layout->addWidget(m_WebView);
+ }
+ 
+diff --git a/src/Widgets/TextDocument.cpp b/src/Widgets/TextDocument.cpp
+index 975290040..2e69f08bb 100644
+--- a/src/Widgets/TextDocument.cpp
++++ b/src/Widgets/TextDocument.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+  **
+- **  Copyright (C) 2019-2021 Kevin B. Hendricks Stratford, ON, Canada 
++ **  Copyright (C) 2019-2024 Kevin B. Hendricks Stratford, ON, Canada 
+  **
+  **  This file is part of Sigil.
+  **
+@@ -51,14 +51,7 @@ QString TextDocument::toText()
+     QString txt;
+     if (isEmpty()) return txt;
+ 
+-#if (QT_VERSION >= QT_VERSION_CHECK(5,9,0))
+     txt = toRawText();
+-#else
+-    // Use text cursors to get the TextDocument's contents
+-    QTextCursor cursor(this);
+-    cursor.select(QTextCursor::Document);
+-    txt = cursor.selectedText();
+-#endif
+ 
+     QChar *uc = txt.data();
+     QChar *e = uc + txt.size();
+diff --git a/src/Widgets/TextView.cpp b/src/Widgets/TextView.cpp
+index ddecb21d9..070a8e724 100644
+--- a/src/Widgets/TextView.cpp
++++ b/src/Widgets/TextView.cpp
+@@ -1,6 +1,6 @@
+ /************************************************************************
+ **
+-**  Copyright (C) 2020-2021 Kevin B. Hendricks, Stratford Ontario Canada
++**  Copyright (C) 2020-2024 Kevin B. Hendricks, Stratford Ontario Canada
+ **  Copyright (C) 2020 Doug Massay
+ **
+ **  Based on CodeViewEditor.cpp portions of which were:
+@@ -104,11 +104,7 @@ int TextView::CalculateLineNumberAreaWidth()
+         max_value /= 10;
+         num_digits++;
+     }
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
+     return LINE_NUMBER_MARGIN * 2 + fontMetrics().horizontalAdvance(QChar('0')) * num_digits;
+-#else
+-    return LINE_NUMBER_MARGIN * 2 + fontMetrics().width(QChar('0')) * num_digits;
+-#endif
+ 
+ }
+ 
+diff --git a/src/main.cpp b/src/main.cpp
+index ac60b7a50..2ea43f3f4 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -41,10 +41,7 @@
+ #include <QStyleFactory>
+ #include <QtWebEngineWidgets>
+ #include <QtWebEngineCore>
+-
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+ #include <QWebEngineUrlScheme>
+-#endif
+ 
+ #include "Misc/PluginDB.h"
+ #include "Misc/UILanguage.h"
+@@ -78,14 +75,6 @@ extern void disableWindowTabbing();
+ extern void removeMacosSpecificMenuItems();
+ #endif
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+-    #define QT_ENUM_SKIPEMPTYPARTS Qt::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS Qt::KeepEmptyParts
+-#else
+-    #define QT_ENUM_SKIPEMPTYPARTS QString::SkipEmptyParts
+-    #define QT_ENUM_KEEPEMPTYPARTS QString::KeepEmptyParts
+-#endif
+-
+ const QString MAC_DOCK_TITLEBAR_FIX =
+     "QDockWidget { "
+     "    titlebar-close-icon: url(:/dark/closedock-macstyle.svg);"
+@@ -251,12 +240,10 @@ void MessageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
+             qt_debug_message = QString("Debug: %1").arg(message.toLatin1().constData());
+             fprintf(stderr, "Debug: %s\n", message.toLatin1().constData());
+             break;
+-#if QT_VERSION >= 0x050600
+         case QtInfoMsg:
+             qt_debug_message = QString("Info: %1").arg(message.toLatin1().constData());
+             fprintf(stderr, "Info: %s\n", message.toLatin1().constData());
+             break;
+-#endif
+         // TODO: should go to a log
+         case QtWarningMsg:
+             qt_debug_message = QString("Warning: %1").arg(message.toLatin1().constData());
+@@ -321,11 +308,7 @@ void MessageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
+         QFile outFile(sigil_log_file);
+         outFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text);
+         QTextStream ts(&outFile);
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+         ts << qt_debug_message << Qt::endl;
+-#else
+-        ts << qt_debug_message << endl;
+-#endif  
+     }
+ }
+ 
+@@ -351,14 +334,6 @@ void update_ini_file_if_needed(const QString oldfile, const QString newfile)
+ // Application entry point
+ int main(int argc, char *argv[])
+ {
+-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-  #if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
+-    QT_REQUIRE_VERSION(argc, argv, "5.10.0");
+-  #else
+-    QT_REQUIRE_VERSION(argc, argv, "5.12.3");
+-  #endif
+-#endif // version
+-
+ 
+ #ifndef QT_DEBUG
+     qInstallMessageHandler(MessageHandler);
+@@ -381,7 +356,6 @@ int main(int argc, char *argv[])
+     update_ini_file_if_needed(Utility::DefinePrefsDir() + "/" + SEARCHES_SETTINGS_FILE,
+                               Utility::DefinePrefsDir() + "/" + SEARCHES_V2_SETTINGS_FILE);
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+     // Qt6 forced move to utf-8 settings values but Qt5 settings are broken for utf-8 codec
+     // See QTBUG-40796 and QTBUG-54510 which never got fixed
+     update_ini_file_if_needed(Utility::DefinePrefsDir() + "/" + SIGIL_SETTINGS_FILE,
+@@ -395,9 +369,7 @@ int main(int argc, char *argv[])
+ 
+     update_ini_file_if_needed(Utility::DefinePrefsDir() + "/" + SEARCHES_V2_SETTINGS_FILE,
+                               Utility::DefinePrefsDir() + "/" + SEARCHES_V6_SETTINGS_FILE);
+-#endif // version
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+     // register the our own url scheme (this is required since Qt 5.12)
+     QWebEngineUrlScheme sigilScheme("sigil");
+     sigilScheme.setFlags(QWebEngineUrlScheme::SecureScheme |
+@@ -407,18 +379,10 @@ int main(int argc, char *argv[])
+     // sigilScheme.setSyntax(QWebEngineUrlScheme::Syntax::Host);
+     sigilScheme.setSyntax(QWebEngineUrlScheme::Syntax::Path);
+     QWebEngineUrlScheme::registerScheme(sigilScheme);
+-#endif // version
+ 
+     // many qtbugs related to mixing 32 and 64 bit qt apps when shader disk cache is used
+     // Only use if using Qt5.9.0 or higher
+-#if QT_VERSION >= 0x050900
+     QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache);
+-#endif
+-
+-    // Disable ? as Sigil does not use QWhatsThis
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0) && QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+-    QCoreApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
+-#endif
+ 
+     // On recent processors with multiple cores this leads to over 40 threads at times
+     // We prevent Qt from constantly creating and deleting threads.
+@@ -442,14 +406,13 @@ int main(int argc, char *argv[])
+     // Take into account current system QT_QPA_PLATFORM values
+     if (!current_env_str.isEmpty()) {
+         if (current_env_str.startsWith(platform_prefix, Qt::CaseInsensitive)) {
+-            current_platform_args = current_env_str.mid(platform_prefix.length()).split(':', QT_ENUM_SKIPEMPTYPARTS);
++            current_platform_args = current_env_str.mid(platform_prefix.length()).split(':', Qt::SkipEmptyParts);
+             qDebug() << "Current windows platform args: " << current_platform_args;
+         }
+     }
+ 
+     // Woff/woff2 fonts can be more fully supported by setting SIGIL_USE_FREETYPE_FONTENGINE to anything.
+     // See https://www.mobileread.com/forums/showthread.php?t=356351 for discussion.
+-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+     QString font_backend_override = Utility::GetEnvironmentVar("SIGIL_USE_FREETYPE_FONTENGINE");
+     // Don't change any global fontengine parameters a user may have set in QT_QPA_PLATFORM
+     bool fontengine_arg_exists = false;
+@@ -463,7 +426,6 @@ int main(int argc, char *argv[])
+             current_platform_args.append("fontengine=freetype");
+         }
+     }
+-#endif // QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+ 
+     // if altgr is not already in the list of windows platform options, add it
+     if (settings.enableAltGr()) {
+@@ -475,7 +437,7 @@ int main(int argc, char *argv[])
+     // if darkmode options are not already in the list of windows platform options,
+     // Set it to 1 so that sigil title bars will be dark in Windows darkmode.
+     // This is setting is assumed with a dark palette starting with Qt6.5.
+-#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0) && QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
++#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+     if (Utility::WindowsShouldUseDarkMode()) {
+         bool darkmode_arg_exists = false;
+         foreach(QString arg, current_platform_args) {
+@@ -625,7 +587,7 @@ int main(int argc, char *argv[])
+                 cstyle = new SigilDarkStyle(astyle);
+             }
+             app.setStyle(cstyle);
+-#if QT_VERSION <= QT_VERSION_CHECK(5, 15, 0) || QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
++#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+             // At this point, I have no idea where along the 5.15.x series this
+             // being present will break dark mode. I only know the first official
+             // official windows version that uses 5.15.9 needs it to be gone.
+@@ -687,11 +649,7 @@ int main(int argc, char *argv[])
+             QString hcolor = app.palette().color(QPalette::Highlight).name();
+             QString user_color = Utility::GetEnvironmentVar("SIGIL_FOCUS_HIGHLIGHT_COLOR");
+             if (!user_color.isEmpty() && user_color.startsWith("#") && user_color.length() == 7) {
+-#if QT_VERSION >= QT_VERSION_CHECK(6,4,0)
+ 		if (QColor::isValidColorName(user_color)) {
+-#else
+-                if (QColor::isValidColor(user_color)) {
+-#endif
+                     hcolor = user_color;
+                 }
+             }
+@@ -737,10 +695,8 @@ int main(int argc, char *argv[])
+         // and on Mac by the ICNS file.
+ #if !defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
+         app.setWindowIcon(GetApplicationIcon());
+-#if QT_VERSION >= 0x050700
+         // Wayland needs this clarified in order to propery assign the icon 
+         app.setDesktopFileName(QStringLiteral("sigil"));
+-#endif // version
+ #endif //!defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
+ 
+         // Create the required QWebEngineProfiles, Initialize the settings
+diff --git a/src/qt5sigil.cmake b/src/qt5sigil.cmake
+deleted file mode 100644
+index 42d2abcc8..000000000
+--- a/src/qt5sigil.cmake
++++ /dev/null
+@@ -1,663 +0,0 @@
+-#############################################################################
+-#     Build Sigil against Qt5 - requires cmake 3.0+ and a C++11 compiler
+-#############################################################################
+-
+-# quiet Qt 5.15 deprecat4ed warnings for now as we must support Qt 5.12.X and even earlier
+-add_definitions(-DQT_NO_DEPRECATED_WARNINGS)
+-
+-if (CMAKE_VERSION VERSION_GREATER "3.27.9")
+-    cmake_policy(SET CMP0153 OLD)
+-endif()
+-
+-if( UNIX AND NOT APPLE )
+-    # Qt5 packages minimum version 5.9 for Linux
+-    set(QT5_NEEDED 5.10)
+-else()
+-    # Qt5 packages minimum version 5.12 for Mac/Windows
+-    set(QT5_NEEDED 5.12)
+-endif()
+-
+-# Qt5 Gets icon color choice (defaults to older Red)
+-if( UNIX AND NOT APPLE )
+-    if ( USE_ALT_ICONS )
+-        LIST( APPEND QRC_FILES Resource_Files/icon/app_icons_alt/app_icons.qrc )
+-    else()
+-        LIST( APPEND QRC_FILES Resource_Files/icon/app_icons_orig/app_icons.qrc )
+-    endif()
+-endif()
+-
+-set( PKGS_TO_FIND Core Network WebEngine WebEngineWidgets Svg Widgets Xml Concurrent PrintSupport LinguistTools )
+-if ( WIN32 )
+-    list( APPEND PKGS_TO_FIND WinExtras )
+-    if ( USE_ALT_ICONS )
+-        set(APP_ICON_PATH "${CMAKE_SOURCE_DIR}/src/Resource_Files/icon/app_icons_alt/app.ico" )
+-    else()
+-        set(APP_ICON_PATH "${CMAKE_SOURCE_DIR}/src/Resource_Files/icon/app_icons_orig/app.ico" )
+-    endif()
+-endif()
+-find_package( Qt5 ${QT5_NEEDED} COMPONENTS ${PKGS_TO_FIND} )
+-
+-set(CMAKE_AUTOMOC ON)
+-
+-if ( NOT DEFINED PKG_SYSTEM_PYTHON )
+-    if (MSVC)
+-        set ( PKG_SYSTEM_PYTHON 1 )
+-    else()
+-        set ( PKG_SYSTEM_PYTHON 0 )
+-    endif()
+-endif()
+-
+-if ( PKG_SYSTEM_PYTHON )
+-    add_definitions( -DBUNDLING_PYTHON )
+-endif()
+-
+-# Default will work for building 32bit Sigil on Windows 32bit and
+-# building 64bit Sigil on Windows 64bit. Those building 32bit Sigil on
+-# Windows 64bit will probably have to set -DSYS_DLL_DIR="C:\Windows\SysWOW64"
+-# in the original CMAKE command.
+-if ( MSVC )
+-    if ( NOT DEFINED SYS_DLL_DIR )
+-        set( SYS_DLL_DIR "C:\\Windows\\System32" )
+-    endif()
+-else()
+-     set( SYS_DLL_DIR "" )
+-endif()
+-
+-# use -DINSTALL_BUNDLED_DICTS=0 to disable the installation of the bundled
+-# hunspell directories. If disabled, the path to the system hunspell dictionaries
+-# will need to specified at run time with the environment variable SIGIL_DICTIONARIES
+-if ( NOT DEFINED INSTALL_BUNDLED_DICTS )
+-    set ( INSTALL_BUNDLED_DICTS 1 )
+-endif()
+-
+-# use -DDISABLE_UPDATE_CHECK=1 to disable the builtin update check.
+-# Mainly for use by *nix distros whose Sigil packages can't make use of the
+-# new release downloads anyway.
+-if ( NOT DEFINED DISABLE_UPDATE_CHECK )
+-    set ( DISABLE_UPDATE_CHECK 0 )
+-endif()
+-
+-set( RAW_SOURCES ${MAIN_FILES} ${TAB_FILES} ${SOURCEUPDATE_FILES} ${BOOK_MANIPULATION_FILES} ${RESOURCE_OBJECT_FILES} ${DIALOG_FILES} ${WIDGET_FILES} ${EXPORTER_FILES} ${IMPORTER_FILES} ${MISC_FILES} ${MISC_EDITORS_FILES} ${QUERY_FILES} ${PARSERS_FILES} ${EMBEDPYTHON_FILES} ${SPCRE_FILES} ${VIEW_EDITOR_FILES} ${MAINUI_FILES} )
+-
+-#############################################################################
+-
+-# Runs UIC on specified files
+-qt5_wrap_ui( UI_FILES_H ${UI_FILES} )
+-set_property( SOURCE ${UI_FILES_H} PROPERTY SKIP_AUTOMOC ON )
+-# Runs RCC on specified files
+-qt5_add_resources( QRC_FILES_CPP ${QRC_FILES} )
+-set_property( SOURCE ${QRC_FILES_CPP} PROPERTY SKIP_AUTOMOC ON )
+-qt5_add_binary_resources( main  ${MAIN_BINARY_QRC_FILES} )
+-qt5_add_binary_resources( fluent ${FLUENT_BINARY_QRC_FILES} )
+-qt5_add_binary_resources( material ${MATERIAL_BINARY_QRC_FILES} )
+-# Runs lrelease on the specified files
+-qt5_add_translation( QM_FILES ${TS_FILES} )
+-
+-# Compiled binary resource files
+-set( EXT_RCC_FILES
+-    ${PROJECT_BINARY_DIR}/main.rcc
+-    ${PROJECT_BINARY_DIR}/fluent.rcc
+-    ${PROJECT_BINARY_DIR}/material.rcc
+-    )
+-
+-# Define the Sigil version string for use in source files
+-set_source_files_properties( Dialogs/About.cpp PROPERTIES COMPILE_DEFINITIONS SIGIL_FULL_VERSION="${SIGIL_FULL_VERSION}" )
+-set_source_files_properties( Misc/Utility.cpp PROPERTIES COMPILE_DEFINITIONS SIGIL_FULL_VERSION="${SIGIL_FULL_VERSION}" )
+-#############################################################################
+-
+-# Adds folders for Visual Studio solution explorer (and for Xcode explorer)
+-source_group( "Forms"             FILES ${UI_FILES} )
+-source_group( "Resource Files"    FILES ${QRC_FILES} )
+-source_group( "Book Manipulation" FILES ${BOOK_MANIPULATION_FILES} )
+-source_group( "Resource Objects"  FILES ${RESOURCE_OBJECT_FILES} )
+-source_group( "Dialogs"           FILES ${DIALOG_FILES} )
+-source_group( "Widgets"           FILES ${WIDGET_FILES} )
+-source_group( "Exporters"         FILES ${EXPORTER_FILES} )
+-source_group( "EmbedPython"       FILES ${EMBEDPYTHON_FILES} )
+-source_group( "Importers"         FILES ${IMPORTER_FILES} )
+-source_group( "Misc"              FILES ${MISC_FILES} )
+-source_group( "MiscEditors"       FILES ${MISC_EDITORS_FILES} )
+-source_group( "Query"             FILES ${QUERY_FILES} )
+-source_group( "Parsers"           FILES ${PARSERS_FILES} )
+-source_group( "SPCRE"             FILES ${SPCRE_FILES} )
+-source_group( "View Editors"      FILES ${VIEW_EDITOR_FILES} )
+-source_group( "Tabs"              FILES ${TAB_FILES} )
+-source_group( "MainUI"            FILES ${MAINUI_FILES} )
+-source_group( "Main Files"        FILES ${MAIN_FILES} )
+-source_group( "Source Updates"    FILES ${SOURCEUPDATE_FILES} )
+-
+-
+-#############################################################################
+-
+-set( ALL_SOURCES ${RAW_SOURCES} ${UI_FILES_H} ${QRC_FILES_CPP} ${QM_FILES} )
+-
+-# Location of our custom MathJax 3.2.2 file
+-set( MATHJAX_CUSTOM "${CMAKE_SOURCE_DIR}/src/Resource_Files/polyfills/custom-mathjax.min.js" )
+-
+-# Adding resource (RC) files for Windows
+-# Grab the current year so copyright notice is updated on Windows file properties
+-string( TIMESTAMP SIGIL_BUILD_YEAR "%Y" )
+-if ( WIN32 )
+-    configure_file( Resource_files/windows/icon.rc.in ${PROJECT_BINARY_DIR}/icon.rc )
+-    configure_file( Resource_files/windows/version.rc.in ${PROJECT_BINARY_DIR}/version.rc )
+-    set( WINDOWS_RC_FILES
+-         ${PROJECT_BINARY_DIR}/icon.rc
+-         ${PROJECT_BINARY_DIR}/version.rc
+-         )
+-    list( APPEND ALL_SOURCES ${WINDOWS_RC_FILES} )
+-    source_group( "Resources" FILES {$WINDOWS_RC_FILES} )
+-endif()
+-
+-#############################################################################
+-
+-# Apple bundle configuration
+-if( APPLE )
+-    # TODO: put these in some sort of add_custom_command( TARGET ${PROJECT_NAME} PRE_BUILD COMMAND ...)
+-    # also delete the Sigil.app folder as PRE_BUILD of Sigil executable
+-
+-    if ( USE_ALT_ICONS )
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_alt/Sigil.icns )
+-    else()
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_orig/Sigil.icns )
+-    endif()
+-
+-    if( CMAKE_GENERATOR STREQUAL Xcode )
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/Resources")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/polyfills")
+-        exec_program("cp ${MATHJAX_CUSTOM} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/polyfills")
+-        exec_program("cp ${ICON_SRC_PATH} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/Resources")
+-        exec_program("cp ${PROJECT_SOURCE_DIR}/Resource_Files/icon/epub.icns ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/Resources")
+-        # Create translation directory.
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/translations")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/hunspell_dictionaries")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/plugin_launchers")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/plugin_launchers/python")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/python3lib")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/lib")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release/Sigil.app/Contents/examples")
+-    else()
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/Resources")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/polyfills")
+-        exec_program("cp ${MATHJAX_CUSTOM} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/polyfills")
+-        exec_program("cp ${ICON_SRC_PATH} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/Resources")
+-        exec_program("cp ${PROJECT_SOURCE_DIR}/Resource_Files/icon/epub.icns ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/Resources")
+-        # Create translation directory.
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/translations")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/hunspell_dictionaries")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/plugin_launchers")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/plugin_launchers/python")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/python3lib")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/lib")
+-        exec_program("mkdir -p ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Sigil.app/Contents/examples")
+-    endif()
+-
+-    if ( PKG_SYSTEM_PYTHON )
+-        configure_file( Resource_Files/python_pkg/osx_add_python_framework.py ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/osx_add_python_framework.py )
+-    endif()
+-
+-    # Copy the PLIST file...
+-    exec_program("cp ${PROJECT_SOURCE_DIR}/Resource_Files/mac/MacOSXBundleInfo.plist ${PROJECT_BINARY_DIR}")
+-
+-    # ...and set the Sigil version string
+-    exec_program("sed -i -e 's/SGVERSION/${SIGIL_FULL_VERSION}/g' ${PROJECT_BINARY_DIR}/MacOSXBundleInfo.plist")
+-endif()
+-
+-#############################################################################
+-
+-# We need to pick up the ui*.h files,
+-# and the headers for the linked-to libraries.
+-# The directories are in reverse order because we're using before to
+-# put our include dirs before any system ones.
+-include_directories( BEFORE
+-                     ${HUNSPELL_INCLUDE_DIRS}
+-                     ${PCRE2_INCLUDE_DIRS}
+-                     ${MINIZIP_INCLUDE_DIRS}
+-                     ${ZLIB_INCLUDE_DIRS}
+-                     ${PYTHON_INCLUDE_DIRS}
+-                     ${GUMBO_INCLUDE_DIRS}
+-                     ${CMAKE_CURRENT_SOURCE_DIR}
+-                     ${CMAKE_CURRENT_BINARY_DIR} )
+-
+-#############################################################################
+-
+-# We make bundles for Mac OS X 
+-if ( APPLE )
+-    add_executable( ${PROJECT_NAME} MACOSX_BUNDLE ${ALL_SOURCES} )
+-    set_target_properties( ${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${PROJECT_BINARY_DIR}/MacOSXBundleInfo.plist )
+-    set_target_properties(${PROJECT_NAME} PROPERTIES CMAKE_SKIP_BUILD_RPATH  TRUE)
+-# ...and a normal executable for everything else.
+-else()
+-    add_executable( ${PROJECT_NAME} WIN32 ${ALL_SOURCES} )
+-endif()
+-
+-# No need to explicity link Qt5::WinMain or to use the qt5_use_modules macro since CMAKE 2.8.11. We require CMAKE 3.0.0
+-set( LIBS_TO_LINK ${HUNSPELL_LIBRARIES} ${PCRE2_LIBRARIES} ${GUMBO_LIBRARIES} ${MINIZIP_LIBRARIES}
+-                  Qt5::Widgets  Qt5::Xml  Qt5::PrintSupport  Qt5::WebEngine  
+-                  Qt5::WebEngineWidgets  Qt5::Svg Qt5::Network  Qt5::Concurrent )
+-if (${USE_NEWER_FINDPYTHON3})
+-    set( _BUNDLED_PYVER "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}" )
+-    message(STATUS "Using newer Python3::Python target to link to Python")
+-    list( APPEND LIBS_TO_LINK Python3::Python )
+-else()
+-    set( _BUNDLED_PYVER "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}" )
+-    message(STATUS "Using older PYTHON_LIBRARIES CMAKE variable to link to Python")
+-    list( APPEND LIBS_TO_LINK ${PYTHON_LIBRARIES} )
+-endif()
+-if ( WIN32 )
+-    list( APPEND LIBS_TO_LINK Qt5::WinExtras )
+-endif()
+-target_link_libraries( ${PROJECT_NAME} ${LIBS_TO_LINK} )
+-
+-#############################################################################
+-
+-# needed for correct static header inclusion
+-if( NOT USE_SYSTEM_LIBS OR NOT PCRE2_FOUND )
+-    add_definitions( -DPCRE2_STATIC )
+-endif()
+-
+-# Speed up stirng building
+-add_definitions( -DQT_USE_FAST_CONCATENATION )
+-add_definitions( -DQT_USE_FAST_OPERATOR_PLUS )
+-
+-#############################################################################
+-
+-# "Link time code generation" flags for MSVC
+-if( MSVC )
+-    add_definitions( /DUNICODE /D_UNICODE /DHAVE_ROUND )
+-    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+-    set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Oi /GL" )
+-    set( CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG" )
+-
+-# "Print all warnings" flag for GCC
+-elseif( CMAKE_COMPILER_IS_GNUCXX )
+-    add_definitions( -Wall )
+-endif()
+-
+-
+-#############################################################################
+-
+-get_target_property(QMAKE_EXECUTABLE Qt5::qmake LOCATION)
+-function(QUERY_QMAKE VAR RESULT)
+-    exec_program(${QMAKE_EXECUTABLE} ARGS "-query ${VAR}" RETURN_VALUE return_code OUTPUT_VARIABLE output )
+-    if(NOT return_code)
+-        file(TO_CMAKE_PATH "${output}" output)
+-        set(${RESULT} ${output} PARENT_SCOPE)
+-    endif(NOT return_code)
+-endfunction(QUERY_QMAKE)
+-
+-# For Mac, add frameworks and make a DMG
+-if( APPLE )
+-    query_qmake(QT_INSTALL_TRANSLATIONS QT_TRANSLATIONS_DIR)
+-
+-    # Set a define that sigil_constants.cpp can then access
+-    set_property (
+-        SOURCE sigil_constants.cpp
+-        PROPERTY COMPILE_DEFINITIONS
+-        DONT_CHECK_UPDATES=${DISABLE_UPDATE_CHECK}
+-        _BUNDLED_PYVER="${_BUNDLED_PYVER}"
+-    )
+-
+-    if(CMAKE_GENERATOR STREQUAL Xcode)
+-        set( WORK_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release" )
+-    else()
+-        set( WORK_DIR "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}" )
+-    endif()
+-    set( MAIN_PACKAGE_DIR ${WORK_DIR}/Sigil.app )
+-
+-    if ("${CODE_SIGN_ID}" STREQUAL "")
+-        add_custom_target(  addframeworks
+-                            COMMAND macdeployqt Sigil.app
+-                            WORKING_DIRECTORY ${WORK_DIR} )
+-#                            DEPENDS ${PROJECT_NAME} )
+-    else()
+-        add_custom_target(  addframeworks
+-                            COMMAND macdeployqt  Sigil.app -codesign="${CODE_SIGN_ID}"
+-                            WORKING_DIRECTORY ${WORK_DIR}
+-                            DEPENDS ${PROJECT_NAME} )
+-    endif()
+-
+-    add_custom_target(  makedmg
+-                        COMMAND macdeployqt Sigil.app -dmg
+-                        WORKING_DIRECTORY ${WORK_DIR})
+-
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${PROJECT_BINARY_DIR}/*.qm ${WORK_DIR}/Sigil.app/Contents/translations/ )
+-    foreach( QM ${QM_FILES} )
+-        # Copy Qt's qm files that coincide with the above
+-        # message( "QM = ${QM}")
+-        string( REGEX REPLACE "(.*)(sigil_)(.*)(\\.qm)" "\\1;\\2;\\3;\\4" PATH_ELEMENTS "${QM}" )
+-        list( GET PATH_ELEMENTS 2 LANG_ID )
+-        # message( "LANG_ID = ${LANG_ID}")
+-        set( QTBASE_QM ${QT_TRANSLATIONS_DIR}/qtbase_${LANG_ID}.qm )
+-        # message( "QTBASE_QM = ${QTBASE_QM}" )
+-        if ( EXISTS ${QTBASE_QM} )
+-            add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${QTBASE_QM} ${WORK_DIR}/Sigil.app/Contents/translations/ )
+-        endif()
+-    endforeach( QM )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${CMAKE_SOURCE_DIR}/src/Resource_Files/dictionaries/* ${WORK_DIR}/Sigil.app/Contents/hunspell_dictionaries )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp -r ${CMAKE_SOURCE_DIR}/src/Resource_Files/plugin_launchers/python/* ${WORK_DIR}/Sigil.app/Contents/plugin_launchers/python )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp -r ${CMAKE_SOURCE_DIR}/src/Resource_Files/python3lib/* ${WORK_DIR}/Sigil.app/Contents/python3lib )
+-
+-    if ( PKG_SYSTEM_PYTHON )
+-        if ( ${USE_NEWER_FINDPYTHON3} )
+-            set( PY_INTERP ${Python3_EXECUTABLE} )
+-        else()
+-            set( PY_INTERP ${PYTHON_EXECUTABLE} )
+-        endif()
+-        add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${PY_INTERP} ARGS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/osx_add_python_framework.py )
+-        message(STATUS "Using ${PY_INTERP} to bundle python")
+-    endif()
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${PROJECT_BINARY_DIR}/*.rcc ${WORK_DIR}/Sigil.app/Contents/Resources/ )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${CMAKE_SOURCE_DIR}/src/Resource_Files/examples/* ${WORK_DIR}/Sigil.app/Contents/examples )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND cp ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/../lib/*.dylib ${WORK_DIR}/Sigil.app/Contents/lib/ )
+-    add_custom_command( TARGET ${PROJECT_NAME} POST_BUILD COMMAND install_name_tool -rpath ${CMAKE_BINARY_DIR}/lib "@executable_path/../lib" ${WORK_DIR}/Sigil.app/Contents/MacOS/Sigil )
+-
+-# For Linux and Windows, provide binary installers.
+-# For this to work on Windows, Inno Setup's iscc compiler needs to be installed and on the system path.
+-elseif (MSVC)
+-    query_qmake(QT_INSTALL_LIBS QT_LIBRARY_DIR)
+-    query_qmake(QT_INSTALL_BINS QT_INSTALL_BINS)
+-    query_qmake(QT_INSTALL_PLUGINS QT_PLUGINS_DIR)
+-    query_qmake(QT_INSTALL_TRANSLATIONS QT_TRANSLATIONS_DIR)
+-
+-    # Set a define that sigil_constants.cpp can then access
+-    set_property (
+-        SOURCE sigil_constants.cpp
+-        PROPERTY COMPILE_DEFINITIONS
+-        DONT_CHECK_UPDATES=${DISABLE_UPDATE_CHECK}
+-    )
+-
+-    set( TEMP_PACKAGE_DIR ${CMAKE_BINARY_DIR}/temp_folder )
+-    set( MAIN_PACKAGE_DIR ${TEMP_PACKAGE_DIR}/Sigil )
+-    set( OUTPUT_PACKAGE_DIR ${CMAKE_BINARY_DIR}/installer )
+-    set( PYTHON_DEST_DIR ${MAIN_PACKAGE_DIR}/python3 )
+-    set( VCREDIST_VER "2017" )
+-    if ( USE_ALT_ICONS )
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_alt )
+-    else()
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_orig )
+-    endif()
+-
+-    # ISS conf file for the Inno Setup compiler
+-    # We first create a CMake configured version of the ISS file,
+-    # and then we copy it to the temp folder every time we need to build the installer.
+-    set( ISS_MAIN_LOCATION ${CMAKE_SOURCE_DIR}/installer/Sigil.iss  )
+-    set( ISS_CONFIGURED_LOCATION ${CMAKE_BINARY_DIR}/Sigil_configured.iss )
+-    set( ISS_TEMP_LOCATION ${CMAKE_BINARY_DIR}/temp_folder/Sigil_configured.iss )
+-
+-    # Specify platform var for Inno
+-    if ( 64_BIT_PLATFORM )
+-        # Used in the ISS CMake configuration
+-        set( ISS_ARCH "x64" )
+-        set( ISS_SETUP_FILENAME_PLATFORM "-x64" )
+-    endif()
+-
+-    # Specify Legacy build in package name
+-    if ( BUILD_FOR_WIN7 )
+-        set( LEGACY_BUILD "-Legacy" )
+-    endif()
+-
+-    # Creates a copy of the ISS file in ${ISS_CONFIGURED_LOCATION} and then configures it
+-    # Used in the ISS CMake configuration
+-    set( LICENSE_LOCATION ${CMAKE_SOURCE_DIR}/installer/win_installer_note.txt  )
+-    configure_file( ${ISS_MAIN_LOCATION} ${ISS_CONFIGURED_LOCATION} )
+-
+-    if ( PKG_SYSTEM_PYTHON )
+-        # Include PyQt5 with the bundled Python by default.
+-        # Pass -DPACKAGE_PYQT5=0 to initial cmake command to disable.
+-        if ( NOT DEFINED PACKAGE_PYQT5 )
+-            set( PACKAGE_PYQT5 1 )
+-        endif()
+-        configure_file( Resource_Files/python_pkg/python_paths.py ${CMAKE_BINARY_DIR}/python_paths.py )
+-        configure_file( Resource_Files/python_pkg/windows_python_gather.py ${CMAKE_BINARY_DIR}/windows_python_gather.py COPYONLY )
+-    endif()
+-
+-    # Run Inno Setup's iscc compiler (*AFTER* all the PRE_BUILD custom commands execute)
+-    add_custom_target(  makeinstaller
+-        COMMAND cmake -E echo "For this to work, Inno Setup's iscc compiler needs to be installed and on the system path."
+-        COMMAND iscc ${ISS_TEMP_LOCATION} )
+-
+-    # Intermediate step to create folders and copy files
+-    set( TARGET_FOR_COPY copyfiles )
+-    add_custom_target(  copyfiles
+-                        COMMENT "Copying installer files to temporary location..."
+-                        DEPENDS ${PROJECT_NAME} )
+-
+-    add_dependencies( makeinstaller copyfiles )
+-
+-    # Copy ISS file to temp folder location
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${ISS_CONFIGURED_LOCATION} ${ISS_TEMP_LOCATION} )
+-
+-    # windeployqt
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND
+-	    windeployqt.exe --release --no-translations --no-compiler-runtime --dir ${MAIN_PACKAGE_DIR} --libdir ${MAIN_PACKAGE_DIR} ${MAIN_PACKAGE_DIR}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX} )
+-
+-    #set( LIBXML2 ${QT_INSTALL_BINS}/libxml2.dll )
+-    #if ( EXISTS ${LIBXML2} )
+-    #    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${LIBXML2} ${MAIN_PACKAGE_DIR} )
+-    #endif()
+-
+-    #set( LIBXSLT ${QT_INSTALL_BINS}/libxslt.dll )
+-    #if ( EXISTS ${LIBXSLT} )
+-    #    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${LIBXSLT} ${MAIN_PACKAGE_DIR} )
+-    #endif()
+-
+-    # Copy the translation qm files
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MAIN_PACKAGE_DIR}/translations/ )
+-    foreach( QM ${QM_FILES} )
+-        # Copy Sigil's qm files
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${QM} ${MAIN_PACKAGE_DIR}/translations/ )
+-        # Copy Qt's qm files that coincide with the above
+-        # message( "QM = ${QM}")
+-        string( REGEX REPLACE "(.*)(sigil_)(.*)(\\.qm)" "\\1;\\2;\\3;\\4" PATH_ELEMENTS "${QM}" )
+-        list( GET PATH_ELEMENTS 2 LANG_ID )
+-        # message( "LANG_ID = ${LANG_ID}")
+-        set( QTBASE_QM ${QT_TRANSLATIONS_DIR}/qtbase_${LANG_ID}.qm )
+-        # message( "QTBASE_QM = ${QTBASE_QM}" )
+-        if ( EXISTS ${QTBASE_QM} )
+-            add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${QTBASE_QM} ${MAIN_PACKAGE_DIR}/translations/ )
+-        endif()
+-    endforeach( QM )
+-
+-    # Copy the MathJax polyfill into the package directory
+-    set( MATHJAX_CUSTOM_DEST ${MAIN_PACKAGE_DIR}/polyfills )
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MATHJAX_CUSTOM_DEST} )
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${MATHJAX_CUSTOM} ${MATHJAX_CUSTOM_DEST} )
+-
+-    # Copy the dictionary files
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MAIN_PACKAGE_DIR}/hunspell_dictionaries/ )
+-    foreach( DIC ${DIC_FILES} )
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${DIC} ${MAIN_PACKAGE_DIR}/hunspell_dictionaries/ )
+-    endforeach( DIC )
+-
+-    # Copy the plugin launcher files
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/src/Resource_Files/plugin_launchers/python ${MAIN_PACKAGE_DIR}/plugin_launchers/python )
+-
+-    # Copy python3lib
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy_directory ${CMAKE_SOURCE_DIR}/src/Resource_Files/python3lib ${MAIN_PACKAGE_DIR}/python3lib )
+-
+-    # Create python virtual environment
+-    if ( PKG_SYSTEM_PYTHON )
+-        if ( ${USE_NEWER_FINDPYTHON3} )
+-            set( PY_INTERP ${Python3_EXECUTABLE} )
+-        else()
+-            set( PY_INTERP ${PYTHON_EXECUTABLE} )
+-        endif()
+-        message(STATUS "Using ${PY_INTERP} to bundle python")
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD
+-                            COMMAND ${PY_INTERP} ARGS ${CMAKE_BINARY_DIR}/windows_python_gather.py )
+-    endif()
+-
+-    # Add external binary resource files
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MAIN_PACKAGE_DIR}/iconthemes/ )
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${EXT_RCC_FILES} ${MAIN_PACKAGE_DIR}/iconthemes )
+-
+-    # Copy the example files
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MAIN_PACKAGE_DIR}/examples/ )
+-    foreach( EXAMPLE ${EXAMPLE_FILES} )
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} POST_BUILD COMMAND cmake -E copy ${EXAMPLE} ${MAIN_PACKAGE_DIR}/examples/ )
+-    endforeach( EXAMPLE )
+-
+-    # Copy hunspell and gumbo dlls to program directory
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/hunspell.dll ${MAIN_PACKAGE_DIR} )
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/sigilgumbo.dll ${MAIN_PACKAGE_DIR} )
+-
+-    # Set the path of the application executable
+-    set( EXE_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX} )
+-
+-    # Copy the application executable
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${EXE_PATH} ${MAIN_PACKAGE_DIR} )
+-
+-    # We need to copy the CRT dlls
+-    # Add -DWIN_INSTALLER_USE_64BIT_CRT=1 to the cmake call if you want to build
+-    # an installer for the x64 verison of Sigil. This will make sure that the
+-    # correct CRT libs are included in the installer.
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${TEMP_PACKAGE_DIR}/vendor/ )
+-    if ( WIN_INSTALLER_USE_64BIT_CRT )
+-        message( STATUS "Using the 64 bit CRT in the Sigil Windows installer" )
+-        message( STATUS "Ensure vcredist_x64.exe for VS${VCREDIST_VER} has been placed in installer/ if you plan on running makeinstaller" )
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-            COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/installer/vcredist_x64.exe ${TEMP_PACKAGE_DIR}/vendor/vcredist.exe )
+-    else()
+-        message( STATUS "Using the 32 bit CRT in the Sigil Windows installer" )
+-        message( STATUS "Ensure vcredist_x86.exe for VS${VCREDIST_VER} has been placed in installer/ if you plan on running makeinstaller" )
+-        add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-            COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/installer/vcredist_x86.exe ${TEMP_PACKAGE_DIR}/vendor/vcredist.exe )
+-    endif()
+-
+-    # Copy the Changelog
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/ChangeLog.txt ${MAIN_PACKAGE_DIR} )
+-
+-    # Copy the license file
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${CMAKE_SOURCE_DIR}/COPYING.txt ${MAIN_PACKAGE_DIR} )
+-
+-    # The folder for miscellaneous files (icon files etc.)
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD COMMAND cmake -E make_directory ${MAIN_PACKAGE_DIR}/misc/ )
+-
+-    # Copy the icon file (used on Linux for the application icon)
+-    add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-                        COMMAND cmake -E copy ${ICON_SRC_PATH}/app_icon_48.png ${MAIN_PACKAGE_DIR}/misc/ )
+-
+-    # Copy the SGF ICO file (used on Windows as the SGF file type icon)
+-    #add_custom_command( TARGET ${TARGET_FOR_COPY} PRE_BUILD
+-    #                    COMMAND cmake -E copy ${PROJECT_SOURCE_DIR}/Resource_Files/icon/sgf.ico ${MAIN_PACKAGE_DIR}/misc/ )
+-
+-    # Remove the temp directory used for building the installer
+-    add_custom_command( TARGET makeinstaller POST_BUILD
+-                        COMMAND cmake -E remove_directory ${TEMP_PACKAGE_DIR}
+-                        COMMENT "Removing temporary directory..." )
+-endif()
+-
+-#############################################################################
+-# You can change the install location by
+-# running cmake like this:
+-#
+-#   cmake -DCMAKE_INSTALL_PREFIX=/new/install/prefix
+-#
+-# By default, the prefix is /usr/local
+-#
+-# You can also control the share installation location
+-#
+-#   cmake -DSHARE_INSTALL_PREFIX=/new/share/install/prefix
+-#
+-# By default, the prefix is the same as CMAKE_INSTALL_PREFIX
+-#
+-# Use 'make install' to install normally
+-#
+-#
+-if( UNIX AND NOT APPLE )
+-    # Leave these so package future packaging scripts can find Qt and its plugins.
+-    query_qmake(QT_INSTALL_LIBS QT_LIBRARY_DIR)
+-    query_qmake(QT_INSTALL_PLUGINS QT_PLUGINS_DIR)
+-
+-    if ( NOT SHARE_INSTALL_PREFIX )
+-        set ( SHARE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} )
+-    endif()
+-
+-    set ( SIGIL_SHARE_ROOT "${SHARE_INSTALL_PREFIX}/share/sigil" )
+-
+-    # Set some defines that sigil_constants.cpp can then access
+-    set_property (
+-        SOURCE sigil_constants.cpp
+-        PROPERTY COMPILE_DEFINITIONS
+-        SIGIL_SHARE_ROOT="${SIGIL_SHARE_ROOT}" DICTS_ARE_BUNDLED=${INSTALL_BUNDLED_DICTS}
+-        EXTRA_DICT_DIRS="${EXTRA_DICT_DIRS}" MATHJAX3_DIR="${MATHJAX3_DIR}"
+-        DONT_CHECK_UPDATES=${DISABLE_UPDATE_CHECK}
+-    )
+-
+-    # Launch script for sigil
+-    set( LINUX_LAUNCH_INSTALL_SCRIPT_CONFIGURED ${CMAKE_BINARY_DIR}/sigil-sh_install_configured )
+-    set( SIGIL_EXECUTABLE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX} )
+-
+-    # Destination directory for our custom MathJax polyfill
+-    set( MATHJAX_CUSTOM_DEST "${CMAKE_BINARY_DIR}/polyfills" )
+-    # Remove previous directories
+-    if ( EXISTS ${MATHJAX_CUSTOM_DEST} )
+-        file( REMOVE_RECURSE ${MATHJAX_CUSTOM_DEST} )
+-    endif()
+-    # Create the polyfills dir and copy our custom Mathjax into it
+-    if ( NOT DEFINED MATHJAX3_DIR )
+-        file( MAKE_DIRECTORY ${MATHJAX_CUSTOM_DEST} )
+-        execute_process( COMMAND cmake -E copy ${MATHJAX_CUSTOM} ${MATHJAX_CUSTOM_DEST} )
+-    endif()
+-
+-    # Configure Linux launch script
+-    configure_file( ${LINUX_LAUNCH_INSTALL_SCRIPT} ${LINUX_LAUNCH_INSTALL_SCRIPT_CONFIGURED} )
+-
+-    if ( CMAKE_BUILD_TYPE STREQUAL "Debug")
+-        set( HUNSPELL_NAME ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhunspelld.so )
+-        set( GUMBO_NAME ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libsigilgumbod.so )
+-    else()
+-        set( HUNSPELL_NAME ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libhunspell.so )
+-        set( GUMBO_NAME ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libsigilgumbo.so )
+-    endif()
+-
+-    # Standard Linux 'make install'
+-    install( TARGETS sigil DESTINATION ${CMAKE_INSTALL_LIBDIR}/sigil )
+-    install( PROGRAMS ${LINUX_LAUNCH_INSTALL_SCRIPT_CONFIGURED} DESTINATION ${CMAKE_INSTALL_BINDIR} RENAME ${PROJECT_NAME} )
+-    if( NOT USE_SYSTEM_LIBS OR NOT HUNSPELL_FOUND )
+-        install( PROGRAMS ${HUNSPELL_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR}/sigil )
+-    endif()
+-    install( PROGRAMS ${GUMBO_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR}/sigil )
+-    if( BUILD_PATCHED_LIBXML2 )
+-        install( PROGRAMS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libsigilxml2.so.2.9.4 DESTINATION ${CMAKE_INSTALL_LIBDIR}/sigil )
+-        install( FILES ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libxml2.so.2 DESTINATION ${CMAKE_INSTALL_LIBDIR}/sigil )
+-    endif()
+-    install( FILES ${LINUX_DESKTOP_FILE} DESTINATION ${SHARE_INSTALL_PREFIX}/share/applications/ )
+-
+-    if ( USE_ALT_ICONS )
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_alt )
+-    else()
+-        set( ICON_SRC_PATH  ${PROJECT_SOURCE_DIR}/Resource_Files/icon/app_icons_orig )
+-    endif()
+-    if( INSTALL_HICOLOR_ICONS )
+-        set( ICON_SIZE 16 32 48 64 128 256 512)
+-        foreach( SIZE ${ICON_SIZE} )
+-            install( FILES ${ICON_SRC_PATH}/app_icon_${SIZE}.png DESTINATION
+-                               ${SHARE_INSTALL_PREFIX}/share/icons/hicolor/${SIZE}x${SIZE}/apps RENAME sigil.png )
+-        endforeach( SIZE )
+-        install( FILES ${ICON_SRC_PATH}/app_icon_scalable.svg DESTINATION
+-                               ${SHARE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps RENAME sigil.svg )
+-    else()
+-        install( FILES ${ICON_SRC_PATH}/${LINUX_DESKTOP_ICON_FILE} DESTINATION ${SHARE_INSTALL_PREFIX}/share/pixmaps RENAME sigil.png )
+-    endif()
+-    install( FILES ${QM_FILES} DESTINATION ${SIGIL_SHARE_ROOT}/translations/ )
+-    if ( INSTALL_BUNDLED_DICTS )
+-        install( FILES ${DIC_FILES} DESTINATION ${SIGIL_SHARE_ROOT}/hunspell_dictionaries/ )
+-    endif()
+-    install( FILES ${EXT_RCC_FILES} DESTINATION ${SIGIL_SHARE_ROOT}/iconthemes/ )
+-    if ( MATHJAX3_DIR )
+-        # FIXME here - how best to tell external MathJax that we want mml/svg with mml3 extension
+-        # install( FILES ${CMAKE_SOURCE_DIR}/src/Resource_Files/polyfills/SIGIL_EBOOK_MML_SVG.js DESTINATION ${MATHJAX3_DIR}/config/local/ )
+-    else()
+-        install( FILES ${MATHJAX_CUSTOM} DESTINATION ${SIGIL_SHARE_ROOT}/polyfills/ )
+-    endif()
+-    install( DIRECTORY ${CMAKE_SOURCE_DIR}/src/Resource_Files/plugin_launchers/python/ DESTINATION ${SIGIL_SHARE_ROOT}/plugin_launchers/python )
+-    install( DIRECTORY ${CMAKE_SOURCE_DIR}/src/Resource_Files/python3lib/ DESTINATION ${SIGIL_SHARE_ROOT}/python3lib )
+-    install( FILES ${EXAMPLE_FILES} DESTINATION ${SIGIL_SHARE_ROOT}/examples/ )
+-endif()
