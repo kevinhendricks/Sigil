@@ -41,7 +41,7 @@
 #include <QRegularExpressionMatch>
 #include <QRegularExpressionMatchIterator>
 #include <QString>
-#include <QStringRef>
+#include <QStringView>
 #include <QPointer>
 #include <QPrinter>
 #include <QApplication>
@@ -2913,7 +2913,7 @@ void CodeViewEditor::FormatBlock(const QString &element_name, bool preserve_attr
             }
 
             // if we reached here we have an opening block tag we need to replace
-            QStringRef opening_tag_text(&text, ti.pos, ti.len);
+            QStringView opening_tag_text = QStringView(text).sliced(ti.pos, ti.len);
             QString all_attributes = TagLister::extractAllAttributes(opening_tag_text);
             
             // look for matching closing tag from here to the end
@@ -3232,7 +3232,7 @@ CodeViewEditor::StyleTagElement CodeViewEditor::GetSelectedStyleTagElement()
     
     int i = m_TagList.findLastTagOnOrBefore(pos);
     TagLister::TagInfo ti = m_TagList.at(i);
-    QStringRef tagstring(&text, ti.pos, ti.len);
+    QStringView tagstring = QStringView(text).sliced(ti.pos, ti.len);
     element.name = ti.tname;
 
     TagLister::AttInfo attr;
@@ -3382,7 +3382,7 @@ QString CodeViewEditor::ProcessAttribute(const QString &attribute_name,
         i--;
     }     
     if ((i < 0) || !tag_list.contains(ti.tname) || (ti.tname == "body")) return QString();
-    QStringRef opening_tag_text(&text, ti.pos, ti.len);
+    QStringView opening_tag_text = QStringView(text).sliced(ti.pos, ti.len);
 
     // Now look for the attribute, which may or may not already exist
     TagLister::AttInfo ainfo;
