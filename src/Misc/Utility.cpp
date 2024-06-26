@@ -547,6 +547,7 @@ QString Utility::ReadUnicodeTextFile(const QString &fullfilepath)
 // file; if the file exists, it is truncated
 void Utility::WriteUnicodeTextFile(const QString &text, const QString &fullfilepath)
 {
+    QString newtext = text.normalized(QString::NormalizationForm_C);
     QFile file(fullfilepath);
 
     if (!file.open(QIODevice::WriteOnly |
@@ -560,7 +561,7 @@ void Utility::WriteUnicodeTextFile(const QString &text, const QString &fullfilep
 
     QTextStream out(&file);
     // We ALWAYS output in UTF-8
-    out << text;
+    out << newtext;
 }
 
 
@@ -638,6 +639,9 @@ QString Utility::URLEncodePath(const QString &path)
     // url encoding them
     QString newpath = DecodeXML(path);
 
+    // The epub spec says all paths must use Unicode Normalization Form C (NFC)
+    newpath = newpath.normalized(QString::NormalizationForm_C);
+
     // then undo any existing url encoding
     newpath = URLDecodePath(newpath);
 
@@ -676,7 +680,10 @@ QString Utility::URLDecodePath(const QString &path)
     // the "&" character which should *not* exist if properly
     // url encoded and if found try to xml decode them first
     apath = DecodeXML(apath);
-    return QUrl::fromPercentEncoding(apath.toUtf8());
+    QString newpath = QUrl::fromPercentEncoding(apath.toUtf8());
+    // epub spec says all paths must use Normalization Form C (NFC)
+    newpath = newpath.normalized(QString::NormalizationForm_C);
+    return newpath;
 }
 
 
