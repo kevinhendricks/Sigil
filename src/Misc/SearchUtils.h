@@ -24,9 +24,13 @@
 #define SEARCHUTILS_H
 
 #include <utility>
+#include <QByteArray>
 #include <QString>
 #include <QList>
+#include <QVariant>
+#include <QMap>
 #include "PCRE2/SPCRE.h"
+
 
 class SearchUtils
 {
@@ -46,6 +50,13 @@ public:
     static QList<std::pair<int, int> > ConvertCaptureGroupstoUTF32(const QString& text,
                                                                    const QList<std::pair<int, int> > &cgs);
 
+    static QByteArray ReadFileAsBinary(const QString& fullfilepath);
+
+    static bool WriteFileAsBinary(const QString& fullfilepath, const QByteArray& data);
+
+    static QMap<QString,QVariant> ReadFuncDictfromJSONFile(const QString& fullfilepath);
+
+    static bool WriteFuncDicttoJSONFile(const QString& fullfilepath, const QMap<QString, QVariant>&dict);
 
 };
 #endif // SEARCHUTILS_H

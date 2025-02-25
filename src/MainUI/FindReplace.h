@@ -145,6 +145,8 @@ public slots:
 
     void CountsReportCount(SearchEditorModel::searchEntry* entry, int& count);
 
+    void DoPythonFunction();
+    
 signals:
 
     void OpenSearchEditorRequest(SearchEditorModel::searchEntry *search_entry = NULL);
@@ -166,6 +168,7 @@ protected:
 
 private slots:
 
+    void ManagePythonFunction();
     bool IsMarkedText();
 
     void FindClicked();

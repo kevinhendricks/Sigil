@@ -219,6 +219,8 @@ set( DIALOG_FILES
     Dialogs/ViewFont.h
     Dialogs/Inspector.cpp
     Dialogs/Inspector.h
+    Dialogs/PythonFunctionEditor.cpp
+    Dialogs/PythonFunctionEditor.h
     )
 
 set( WIDGET_FILES
@@ -239,7 +241,11 @@ set( WIDGET_FILES
     Widgets/TVLineNumberArea.cpp
     Widgets/TVLineNumberArea.h
     Widgets/CaretStyle.cpp
-    Widgets/CaretStyle.h
+    Widgets/CaretStyle.h 
+    Widgets/SELineNumberArea.cpp
+    Widgets/SELineNumberArea.h
+    Widgets/SourceEditor.cpp
+    Widgets/SourceEditor.h
     )
 
 set( EXPORTER_FILES

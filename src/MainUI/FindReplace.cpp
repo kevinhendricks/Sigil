@@ -34,15 +34,19 @@
 #include <QMessageBox>
 #include <QCompleter>
 #include <QRegularExpression>
+#include <QVariant>
+#include <QMap>
 #include <QDebug>
 
 #include "Dialogs/DryRunReplace.h"
 #include "Dialogs/ReplacementChooser.h"
+#include "Dialogs/PythonFunctionEditor.h"
 #include "Tabs/TextTab.h"
 #include "Tabs/FlowTab.h"
 #include "MainUI/FindReplace.h"
 #include "Misc/SettingsStore.h"
 #include "Misc/Utility.h"
+#include "Misc/SearchUtils.h"
 #include "Misc/FindReplaceQLineEdit.h"
 #include "PCRE2/PCREErrors.h"
 #include "ResourceObjects/Resource.h"
@@ -474,7 +478,6 @@ void FindReplace::FindAnyTextInTags(QString text)
     ReadSettings();
     // RestoreFRFocusIfNeeded(had_focus, true);
 }
-
 
 bool FindReplace::DoFindNext()
 {
@@ -2299,6 +2302,19 @@ void FindReplace::ValidateRegex()
     ui.revalid->setText("");
 }
 
+void FindReplace::DoPythonFunction()
+{
+    QTimer::singleShot(0, this, SLOT(ManagePythonFunction()));
+}
+
+void FindReplace::ManagePythonFunction()
+{
+    QString fullfilepath = Utility::DefinePrefsDir() + "/replace_functions.json";
+    QMap<QString, QVariant> funcmap = SearchUtils::ReadFuncDictfromJSONFile(fullfilepath);
+    PythonFunctionEditor pfe(funcmap, this);
+    pfe.exec();
+    // SearchUtils::WriteFuncDicttoJSONFile(fullfilepath, funcmap);
+}
 
 void FindReplace::ConnectSignalsToSlots()
 {

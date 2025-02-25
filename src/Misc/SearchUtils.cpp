@@ -19,6 +19,11 @@
 **
 *************************************************************************/
 
+#include <QFile>
+#include <QVariant>
+#include <QMap>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QDebug>
 #include "sigil_constants.h"
 #include "Misc/SearchUtils.h"
@@ -96,3 +101,64 @@ QList<std::pair<int, int> > SearchUtils::ConvertCaptureGroupstoUTF32(const QStri
     }
     return ncgs;
 }
+
+QByteArray SearchUtils::ReadFileAsBinary(const QString& fullfilepath)
+{
+    QFile file(fullfilepath);
+    if (!file.open(QFile::ReadOnly)) {
+        qDebug() << "Error could not read file: " << fullfilepath;
+        return QByteArray();
+    }
+    QByteArray data = file.readAll();
+    file.close();
+    return data;
+}
+
+bool SearchUtils::WriteFileAsBinary(const QString& fullfilepath, const QByteArray& data)
+{
+    QFile file(fullfilepath);
+    if (!file.open(QFile::WriteOnly)) {
+        qDebug() << "Error could not write to file: " << fullfilepath;
+        return false;
+    }
+    file.write(data);
+    file.close();
+    return true;
+}
+
+QMap<QString,QVariant> SearchUtils::ReadFuncDictfromJSONFile(const QString& fullfilepath)
+{
+    QMap<QString, QVariant> func;
+    QByteArray data = ReadFileAsBinary(fullfilepath);
+    QJsonDocument json_doc = QJsonDocument::fromJson(data);
+    if (json_doc.isNull()) {
+        qDebug() << "Failed to create JSON DOC";
+        return func;
+    }
+    if (!json_doc.isObject()) {
+        qDebug() << "Failed to create JSON DOC";
+        return func;
+    }
+    QJsonObject json_obj = json_doc.object();
+    if (json_obj.isEmpty()){
+        qDebug() << "JSON object is empty";
+        return func;
+    }
+    func = json_obj.toVariantMap();
+    return func;
+}
+
+bool SearchUtils::WriteFuncDicttoJSONFile(const QString& fullfilepath, const QMap<QString, QVariant>&dict)
+{
+    QJsonObject json_obj = QJsonObject::fromVariantMap(dict);
+#if 0
+    foreach(QString key, dict.keys()) {
+        json_obj[key] = dict[key];
+    }
+#endif
+    QJsonDocument json_doc(json_obj);
+    QString json_string = json_doc.toJson();
+    bool didwrite = WriteFileAsBinary(fullfilepath, json_string.toUtf8());
+    return didwrite;
+}
+
