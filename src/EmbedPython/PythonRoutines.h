@@ -115,7 +115,9 @@ public:
     QString GetSingleReplacementByFunction(PyObjectPtr FSO,
                                            const QString& text,
                                            const QList<std::pair<int,int>>capture_groups);
-    
+
+    bool CreateUserJsonFileInPython();
+
 private:
 
     ///////////////////////////////

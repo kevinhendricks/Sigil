@@ -35,7 +35,6 @@ import re
 _EMPTY_FUNCTION = 'def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn match.group(0)'
 
 _CaseChgFunctions = {
-    
     "uppercase": "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn replace_uppercase(match, number, file_name, metadata, data)\n",
             
     "lowercase": "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn replace_lowercase(match, number, file_name, metadata, data)\n",
@@ -55,7 +54,6 @@ _CaseChgFunctions = {
     "titlecase_ignore_tags": "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn replace_titlecase_ignore_tags(match, number, file_name, metadata, data)\n",
 
     "swapcase_ignore_tags": "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn replace_swapcase_ignore_tags(match, number, file_name, metadata, data)\n"
-            
 }
 
 def read_json(jsonpath):
@@ -69,6 +67,16 @@ def read_json(jsonpath):
             except Exception:
                 pass
     return d
+
+
+def createJsonFile(jsonpath):
+    d = {}
+    d.update(_CaseChgFunctions)
+    if not os.path.exists(jsonpath):
+        with open(jsonpath, 'w', encoding='utf-8') as f:
+            json.dump(d, f, indent=2, ensure_ascii=False)
+        return 1
+    return 0
 
 
 class SigilMatch(object):
@@ -220,6 +228,9 @@ def main():
 </body>
 </html>
 '''
+    # apath = "/Users/kbhend/Library/Application Support/sigil-ebook/sigil/replace_functions.json"
+    # createJsonFile(apath)
+    
     metadataxml = "<metadata><dc:title>Hello</dc:title></metadata>"
     function_name = "titlecase"
     pattern = r'''<h1\s[^>]*>([^<>]*)</h1>'''
@@ -237,6 +248,7 @@ def main():
     result = nenv.get_single_replacement_by_function(text, capture_groups)
     print(result)
     return 0
+
 
 
 if __name__ == '__main__':

@@ -521,3 +521,23 @@ QString PythonRoutines::GetSingleReplacementByFunction(PyObjectPtr FSO,
     }
     return res.toString();
 }
+
+
+bool PythonRoutines::CreateUserJsonFileInPython()
+{
+    int rv = 0;
+    QString traceback;
+    QString jsonpath = Utility::DefinePrefsDir() + "/replace_functions.json";
+    QString module = "functionsearch";
+    QList<QVariant> args;
+    args.append(QVariant(jsonpath));
+    EmbeddedPython* epp = EmbeddedPython::instance();
+    QVariant res = epp->runInPython(module, QString("createJsonFile"), args, &rv, traceback, true);
+    if (rv) {
+        fprintf(stderr, "createJsonFile error %d traceback %s\n",rv, traceback.toStdString().c_str());
+    }
+    int v = res.toInt();
+    args.clear();
+    if (v) return true;
+    return false;
+}

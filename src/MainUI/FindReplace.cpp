@@ -38,6 +38,7 @@
 #include <QMap>
 #include <QDebug>
 
+#include "EmbedPython/PythonRoutines.h"
 #include "Dialogs/DryRunReplace.h"
 #include "Dialogs/ReplacementChooser.h"
 #include "Dialogs/PythonFunctionEditor.h"
@@ -2313,6 +2314,10 @@ void FindReplace::DoPythonFunction()
 void FindReplace::ManagePythonFunction()
 {
     QString fullfilepath = Utility::DefinePrefsDir() + "/replace_functions.json";
+    if (!QFile::exists(fullfilepath)) {
+        PythonRoutines pr;
+        pr.CreateUserJsonFileInPython();
+    }
     QMap<QString, QVariant> funcmap = SearchUtils::ReadFuncDictfromJSONFile(fullfilepath);
     PythonFunctionEditor pfe(funcmap, this);
     connect(&pfe, SIGNAL(UseFunctionRequest(const QString&)), this, SLOT(SetReplace(const QString&)));
