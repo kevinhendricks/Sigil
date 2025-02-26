@@ -172,7 +172,7 @@ class FunctionSearch(object):
 def getFunctionSearchEnv(metadataxml, function_name, jsonpath=None):
     repfuncs = {}
     if jsonpath:
-        repfuncs = read_json(json_path)
+        repfuncs = read_json(jsonpath)
     if not repfuncs:
         repfuncs = _CaseChgFunctions
     return FunctionSearch(metadataxml,function_name, repfuncs)
