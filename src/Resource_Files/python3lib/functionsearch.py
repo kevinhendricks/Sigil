@@ -27,9 +27,12 @@
 
 import sys
 import os
+import json
 
 from functionrep import *
 import re
+
+_EMPTY_FUNCTION = 'def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn match.group(0)'
 
 _CaseChgFunctions = {
     
@@ -54,6 +57,19 @@ _CaseChgFunctions = {
     "swapcase_ignore_tags": "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn replace_swapcase_ignore_tags(match, number, file_name, metadata, data)\n"
             
 }
+
+def read_json(jsonpath):
+    d = {}
+    if os.path.exists(jsonpath):
+        with open(jsonpath, 'r', encoding='utf-8') as f:
+            try:
+                d = json.load(f)
+            except SystemError:
+                pass
+            except Exception:
+                pass
+    return d
+
 
 class SigilMatch(object):
 
@@ -86,10 +102,9 @@ class SigilMatch(object):
         return results 
 
 
-
 class FunctionSearch(object):
 
-    def __init__(self, metadataxml, function_name):
+    def __init__(self, metadataxml, function_name, repfuncs):
         global replace_lowercase
         global replace_uppercase
         global replace_capitalize
@@ -103,11 +118,15 @@ class FunctionSearch(object):
 
         self.metadataxml = metadataxml
         self.function_name = function_name
+        self.repfuncs = repfuncs
         self.number = 0
         self.funcData = {}
         self.bookpath =''
         self.replace = None
-        self.func = _CaseChgFunctions[function_name]
+        if function_name in self.repfuncs:
+            self.func = self.repfuncs[function_name]
+        else:
+            self.func = _EMPTY_FUNCTION
         self.replaceDict = globals()
         exec(self.func, self.replaceDict)
         if 'replace' in self.replaceDict:
@@ -150,8 +169,13 @@ class FunctionSearch(object):
         return result
 
 
-def getFunctionSearchEnv(metadataxml, function_name):
-    return FunctionSearch(metadataxml,function_name)
+def getFunctionSearchEnv(metadataxml, function_name, jsonpath=None):
+    repfuncs = {}
+    if jsonpath:
+        repfuncs = read_json(json_path)
+    if not repfuncs:
+        repfuncs = _CaseChgFunctions
+    return FunctionSearch(metadataxml,function_name, repfuncs)
 
 
 def main():
@@ -201,14 +225,14 @@ def main():
     pattern = r'''<h1\s[^>]*>([^<>]*)</h1>'''
     bookpath = "OEBPS/Contents.xhtml"
 
-    gfsenv = getFunctionSearchEnv(metadataxml, function_name)
+    gfsenv = getFunctionSearchEnv(metadataxml, function_name, None)
     result = gfsenv.do_text_replacements(pattern, bookpath, text)
     print(result)
 
     text = "<h1 class=\"title\">this is a long line of text that is now even longer.</h1>"
     metadataxml = "<metadata><dc:title>Hello</dc:title></metadata>"
     function_name = "titlecase_ignore_tags"
-    nenv = getFunctionSearchEnv(metadataxml, function_name)
+    nenv = getFunctionSearchEnv(metadataxml, function_name, None)
     capture_groups = [(0,75)]
     result = nenv.get_single_replacement_by_function(text, capture_groups)
     print(result)

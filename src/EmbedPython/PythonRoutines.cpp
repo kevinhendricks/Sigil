@@ -447,11 +447,13 @@ PyObjectPtr PythonRoutines::SetupInitialFunctionSearchEnvInPython(const QString&
 {
     int rv = 0;
     QString traceback;
+    QString jsonpath = Utility::DefinePrefsDir() + "/replacement_functions.json";
 
     QString module = "functionsearch";
     QList<QVariant> args;
     args.append(QVariant(metaxml));
     args.append(QVariant(function_name));
+    args.append(QVariant(jsonpath));
     EmbeddedPython* epp = EmbeddedPython::instance();
     QVariant res = epp->runInPython(module, QString("getFunctionSearchEnv"), args, &rv, traceback, true);
     if (rv) {
