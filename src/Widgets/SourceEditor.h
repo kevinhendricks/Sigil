@@ -115,6 +115,7 @@ signals:
 
 protected:
 
+    bool event(QEvent* event) override;
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
 

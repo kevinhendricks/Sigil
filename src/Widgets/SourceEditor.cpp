@@ -79,6 +79,23 @@ SourceEditor::~SourceEditor()
 {
 }
 
+bool SourceEditor::event(QEvent* e)
+{
+    if (e->type() == QEvent::PaletteChange) {
+        if (m_Highlighter) {
+            CSSHighlighter* cssh = qobject_cast<CSSHighlighter*>(m_Highlighter);
+            if (cssh) cssh->do_rehighlight();
+
+            XHTMLHighlighter* xmlh = qobject_cast<XHTMLHighlighter*>(m_Highlighter);
+            if (xmlh) xmlh->do_rehighlight();
+
+            PythonSyntaxHighlighter* pyh = qobject_cast<PythonSyntaxHighlighter*>(m_Highlighter);
+            if (pyh) pyh->do_rehighlight();
+        }
+    }
+    return QPlainTextEdit::event(e);
+}
+
 void SourceEditor::setBlockMap(const QStringList& blockmap)
 {
     m_blockmap = blockmap;

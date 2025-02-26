@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2020-2024 Kevin B. Hendricks, Stratford ON Canada
+**  Copyright (C) 2020-2025 Kevin B. Hendricks, Stratford ON Canada
 **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
 **
 **  This file is part of Sigil.
@@ -24,9 +24,8 @@
 #ifndef XHTMLHIGHLIGHTER2_H
 #define XHTMLHIGHLIGHTER2_H
 
-#include <QtGui/QSyntaxHighlighter>
+#include <QSyntaxHighlighter>
 #include <QRegularExpression>
-
 #include "Misc/SettingsStore.h"
 
 class QTextDocument;

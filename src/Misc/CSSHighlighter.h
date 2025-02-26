@@ -22,8 +22,7 @@
 #ifndef CSSHIGHLIGHTER_H
 #define CSSHIGHLIGHTER_H
 
-#include <QtGui/QSyntaxHighlighter>
-
+#include <QSyntaxHighlighter>
 #include "Misc/SettingsStore.h"
 
 class CSSHighlighter : public QSyntaxHighlighter

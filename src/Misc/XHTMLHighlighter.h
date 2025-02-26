@@ -1,6 +1,7 @@
 /************************************************************************
 **
-**  Copyright (C) 2009, 2010, 2011  Strahinja Markovic  <strahinja.markovic@gmail.com>
+**  Copyright (C) 2015-2025 Kevin B. Hendricks, Stratford Ontario Canada
+**  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
 **
 **  This file is part of Sigil.
 **
@@ -23,7 +24,7 @@
 #ifndef XHTMLHIGHLIGHTER_H
 #define XHTMLHIGHLIGHTER_H
 
-#include <QtGui/QSyntaxHighlighter>
+#include <QSyntaxHighlighter>
 #include <QRegularExpression>
 
 #include "Misc/SettingsStore.h"

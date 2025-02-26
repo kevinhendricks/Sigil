@@ -1,6 +1,8 @@
 // MIT License
 // 
 // Copyright (c) 2019 Edwin Christian Yllanes Cucho
+// Edits and Changes to work with Sigil: Copyright (c) Kevin B. Hendricks
+//                                       Stratford, Ontario Canada
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +22,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include "Misc/Utility.h"
 #include "Misc/PythonSyntaxHighlighter.h"
 
 HighlightingRule::HighlightingRule(const QString &patternStr, int n,
@@ -102,17 +105,6 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(QObject *parent)
                          << "\\["
                          << "]";
 
-  basicStyles.insert("keyword", getTextCharFormat("blue"));
-  basicStyles.insert("operator", getTextCharFormat("red"));
-  basicStyles.insert("brace", getTextCharFormat("darkGray"));
-  basicStyles.insert("defclass", getTextCharFormat("black", "bold"));
-  basicStyles.insert("brace", getTextCharFormat("darkGray"));
-  basicStyles.insert("string", getTextCharFormat("magenta"));
-  basicStyles.insert("string2", getTextCharFormat("darkMagenta"));
-  basicStyles.insert("comment", getTextCharFormat("darkGreen", "italic"));
-  basicStyles.insert("self", getTextCharFormat("black", "italic"));
-  basicStyles.insert("numbers", getTextCharFormat("brown"));
-
   triSingleQuote.setPattern("'''");
   triDoubleQuote.setPattern("\"\"\"");
 
@@ -121,10 +113,35 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(QObject *parent)
 
 void PythonSyntaxHighlighter::do_rehighlight()
 {
+    initializeRules();
     rehighlight();
 }
 
-void PythonSyntaxHighlighter::initializeRules() {
+void PythonSyntaxHighlighter::initializeRules()
+{
+  basicStyles.clear();
+  if (Utility::IsDarkMode()) {
+      basicStyles.insert("keyword", getTextCharFormat("lightBlue", "bold"));
+      basicStyles.insert("operator", getTextCharFormat("magenta"));
+      basicStyles.insert("brace", getTextCharFormat("orangered"));
+      basicStyles.insert("defclass", getTextCharFormat("lightGreen", "bold"));
+      basicStyles.insert("string", getTextCharFormat("lightCyan"));
+      basicStyles.insert("string2", getTextCharFormat("lightCyan"));
+      basicStyles.insert("comment", getTextCharFormat("lightYellow", "italic"));
+      basicStyles.insert("self", getTextCharFormat("blue", "italic"));
+      basicStyles.insert("numbers", getTextCharFormat("lightBrown"));
+  } else {
+      basicStyles.insert("keyword", getTextCharFormat("blue", "bold"));
+      basicStyles.insert("operator", getTextCharFormat("darkMagenta"));
+      basicStyles.insert("brace", getTextCharFormat("darkRed"));
+      basicStyles.insert("defclass", getTextCharFormat("green", "bold"));
+      basicStyles.insert("string", getTextCharFormat("darkCyan"));
+      basicStyles.insert("string2", getTextCharFormat("darkCyan"));
+      basicStyles.insert("comment", getTextCharFormat("darkYellow", "italic"));
+      basicStyles.insert("self", getTextCharFormat("darkBlue", "italic"));
+      basicStyles.insert("numbers", getTextCharFormat("brown"));
+  }
+  
   for (const QString &currKeyword : keywords) {
     rules.append(HighlightingRule(QString("\\b%1\\b").arg(currKeyword), 0,
                                   basicStyles.value("keyword")));
