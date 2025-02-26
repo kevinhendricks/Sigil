@@ -103,8 +103,7 @@ public:
 
 
 
-    PyObjectPtr SetupInitialFunctionSearchEnvInPython(const QString& metaxml,
-                                                      const QString& function_name);
+    PyObjectPtr SetupInitialFunctionSearchEnvInPython(const QString& function_name);
 
     QString DoFunctionSearchTextReplacementsInPython(PyObjectPtr FSO,
                                                      const QString& pattern,

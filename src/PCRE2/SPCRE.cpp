@@ -263,7 +263,8 @@ SPCRE::MatchInfo SPCRE::getLastMatchInfo(const QString &text)
     }
 }
 
-bool SPCRE::replaceText(const QString &text, const QList<std::pair<int, int>> &capture_groups_offsets, const QString &replacement_pattern, QString &out)
+bool SPCRE::replaceText(const QString &text, const QList<std::pair<int, int>> &capture_groups_offsets,
+                        const QString &replacement_pattern, QString &out)
 {
     QString functionname;
     QString rname = replacement_pattern.trimmed();
@@ -279,7 +280,17 @@ bool SPCRE::replaceText(const QString &text, const QList<std::pair<int, int>> &c
     if (!isValid()) return false;
     QList<std::pair<int, int> > fixed_groups = SearchUtils::ConvertCaptureGroupstoUTF32(text, capture_groups_offsets);
     PythonRoutines pr;
-    PyObjectPtr fsp = pr.SetupInitialFunctionSearchEnvInPython(QString(""),functionname);
+    PyObjectPtr fsp = pr.SetupInitialFunctionSearchEnvInPython(functionname);
+    out = pr.GetSingleReplacementByFunction(fsp, text, fixed_groups);
+    return true;
+}
+
+bool SPCRE::functionReplaceText(const QString &text, const QList<std::pair<int, int>> &capture_groups_offsets,
+                                PyObjectPtr fsp, QString &out)
+{
+    if (!isValid()) return false;
+    QList<std::pair<int, int> > fixed_groups = SearchUtils::ConvertCaptureGroupstoUTF32(text, capture_groups_offsets);
+    PythonRoutines pr;
     out = pr.GetSingleReplacementByFunction(fsp, text, fixed_groups);
     return true;
 }

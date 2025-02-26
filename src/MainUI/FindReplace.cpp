@@ -1235,11 +1235,9 @@ int FindReplace::ReplaceInAllFiles()
             int i = pattern.indexOf("(?U)");
             pattern.remove(i,4);
         }
-        QString metadataxml = m_MainWindow->GetOPFMetadataXML();
         count = SearchOperations::FunctionReplaceInAllFiles(
                     pattern,
                     functionname,
-                    metadataxml,
                     search_files);
     }
     return count;
@@ -2302,6 +2300,11 @@ void FindReplace::ValidateRegex()
     ui.revalid->setText("");
 }
 
+void FindReplace::SetReplace(const QString& text)
+{
+    UpdatePreviousReplaceStrings(text);
+}
+
 void FindReplace::DoPythonFunction()
 {
     QTimer::singleShot(0, this, SLOT(ManagePythonFunction()));
@@ -2312,8 +2315,8 @@ void FindReplace::ManagePythonFunction()
     QString fullfilepath = Utility::DefinePrefsDir() + "/replace_functions.json";
     QMap<QString, QVariant> funcmap = SearchUtils::ReadFuncDictfromJSONFile(fullfilepath);
     PythonFunctionEditor pfe(funcmap, this);
+    connect(&pfe, SIGNAL(UseFunctionRequest(const QString&)), this, SLOT(SetReplace(const QString&)));
     pfe.exec();
-    // SearchUtils::WriteFuncDicttoJSONFile(fullfilepath, funcmap);
 }
 
 void FindReplace::ConnectSignalsToSlots()

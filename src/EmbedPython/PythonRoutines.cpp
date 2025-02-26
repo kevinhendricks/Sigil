@@ -442,13 +442,12 @@ QString PythonRoutines::RebaseManifestIDsInPython(const QString& opfdata)
 }
 
 
-PyObjectPtr PythonRoutines::SetupInitialFunctionSearchEnvInPython(const QString& metaxml,
-                                                                  const QString& function_name)
+PyObjectPtr PythonRoutines::SetupInitialFunctionSearchEnvInPython(const QString& function_name)
 {
     int rv = 0;
     QString traceback;
     QString jsonpath = Utility::DefinePrefsDir() + "/replacement_functions.json";
-
+    QString metaxml = Utility::GetMainWindowMetadata();
     QString module = "functionsearch";
     QList<QVariant> args;
     args.append(QVariant(metaxml));

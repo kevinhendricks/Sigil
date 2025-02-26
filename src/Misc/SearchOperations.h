@@ -50,7 +50,6 @@ public:
 
     static int FunctionReplaceInAllFiles(const QString &search_regex,
                                          const QString &function_name,
-                                         const QString &metadata_xml,
                                          QList<Resource *> resources);
 
 private:

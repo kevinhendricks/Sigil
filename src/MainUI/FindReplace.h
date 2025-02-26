@@ -118,6 +118,7 @@ public slots:
     void CountAllSearch();
     void ReplaceAllSearch();
     void DoRestart();
+    void SetReplace(const QString& text);
 
     // Shows a message in the main window.
     void ShowMessage(const QString &message);

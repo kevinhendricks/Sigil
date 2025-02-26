@@ -233,7 +233,6 @@ void SearchOperations::Accumulate(int &first, const int &second)
 
 int SearchOperations::FunctionReplaceInAllFiles(const QString &search_regex,
                                                 const QString &function_name,
-                                                const QString &metadata_xml,
                                                 QList<Resource *> resources)
 {
     QProgressDialog progress(QObject::tr("Replacing search term..."), 0, 0, resources.count(), Utility::GetMainWindow());
@@ -241,7 +240,7 @@ int SearchOperations::FunctionReplaceInAllFiles(const QString &search_regex,
     int progress_value = 0;
     progress.setValue(progress_value);
     PythonRoutines pr;
-    PyObjectPtr fsp = pr.SetupInitialFunctionSearchEnvInPython(metadata_xml, function_name);
+    PyObjectPtr fsp = pr.SetupInitialFunctionSearchEnvInPython(function_name);
 
     foreach(Resource * resource, resources) {
        progress.setValue(progress_value++);
