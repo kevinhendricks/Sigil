@@ -352,6 +352,8 @@ set( MISC_FILES
     Misc/XHTMLHighlighter2.h
     Misc/CSSHighlighter.cpp
     Misc/CSSHighlighter.h
+    Misc/PythonSyntaxHighlighter.cpp
+    Misc/PythonSyntaxHighlighter.h
     Misc/HTMLEncodingResolver.cpp
     Misc/HTMLEncodingResolver.h
     Misc/HTMLSpellCheck.cpp

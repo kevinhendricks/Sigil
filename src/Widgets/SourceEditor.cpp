@@ -44,6 +44,7 @@
 
 #include "Misc/XHTMLHighlighter.h"
 #include "Misc/CSSHighlighter.h"
+#include "Misc/PythonSyntaxHighlighter.h"
 #include "MainUI/MainWindow.h"
 #include "Misc/SettingsStore.h"
 #include "Misc/Utility.h"
@@ -177,6 +178,8 @@ void SourceEditor::DoHighlightDocument(HighlighterType high_type)
             m_Highlighter = new XHTMLHighlighter(false, this);
         } else if (high_type == SourceEditor::Highlight_CSS) {
             m_Highlighter = new CSSHighlighter(this);
+        } else if (high_type == SourceEditor::Highlight_PYTHON) {
+            m_Highlighter = new PythonSyntaxHighlighter(this);
         }
     }
     if (m_Highlighter) {

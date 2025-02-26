@@ -44,14 +44,6 @@
 
 static const QString SETTINGS_GROUP = "python_editor";
 
-static const QStringList XML_EXTENSIONS = QStringList() << "htm" << "html" << "xhtml" <<
-                                                           "ncx" << "opf" << "pls" << "smil" <<
-                                                           "svg" << "ttml" << "xml" << "xpgt";
-
-static const QStringList CSS_EXTENSIONS = QStringList() << "css";
-
-static const QStringList PYTHON_EXTENSIONS = QStringList() << "py";
-
 static const QString EMPTY_REPLACE_FUNCTION = "def replace(match, number, file_name, metadata, data):\n\tif match:\n\t\treturn match.group(0)";
 
 PythonFunctionEditor::PythonFunctionEditor(QMap<QString,QVariant>& func, QWidget *parent)
@@ -95,21 +87,8 @@ PythonFunctionEditor::PythonFunctionEditor(QMap<QString,QVariant>& func, QWidget
     m_editor->setTabStopDistance(QFontMetricsF(m_editor->font()).horizontalAdvance(' ') * 4);
     ReadSettings();
     LoadEditor();
-    m_hightype = SourceEditor::Highlight_NONE;
-#if 0    
-    if (XML_EXTENSIONS.contains(ext)) {
-        m_hightype = TextView::Highlight_XHTML;
-        m_editor->DoHighlightDocument(m_hightype);
-    }
-    if (CSS_EXTENSIONS.contains(ext)) {
-        m_hightype = TextView::Highlight_CSS;
-        m_editor->DoHighlightDocument(m_hightype);
-    }
-    if (PYTHON_EXTENSIONS.contains(ext)) {
-        m_hightype = TextView::Highlight_PYTHON;
-        m_editor->DoHighlightDocument(m_hightype);
-    }
-#endif    
+    m_hightype = SourceEditor::Highlight_PYTHON;
+    m_editor->DoHighlightDocument(m_hightype);
     connectSignalsToSlots();
 }
 
