@@ -85,6 +85,7 @@ PythonFunctionEditor::PythonFunctionEditor(QMap<QString,QVariant>& func, QWidget
     tf.setStyleHint(QFont::TypeWriter);
     m_editor->setFont(tf);
     m_editor->setTabStopDistance(QFontMetricsF(m_editor->font()).horizontalAdvance(' ') * 4);
+    setWindowTitle(tr("Python Function Replace"));
     ReadSettings();
     LoadEditor();
     m_hightype = SourceEditor::Highlight_PYTHON;
