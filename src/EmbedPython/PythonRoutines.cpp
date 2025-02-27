@@ -446,7 +446,7 @@ PyObjectPtr PythonRoutines::SetupInitialFunctionSearchEnvInPython(const QString&
 {
     int rv = 0;
     QString traceback;
-    QString jsonpath = Utility::DefinePrefsDir() + "/replacement_functions.json";
+    QString jsonpath = Utility::DefinePrefsDir() + "/replace_functions.json";
     QString metaxml = Utility::GetMainWindowMetadata();
     QString module = "functionsearch";
     QList<QVariant> args;
