@@ -22,6 +22,7 @@
 #ifndef PYTHONFUNCTIONEDITOR_H
 #define PYTHONFUNCTIONEDITOR_H
 
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QList>
@@ -42,6 +43,8 @@ public:
 
     PythonFunctionEditor(QMap<QString, QVariant>& func, QWidget *parent);
     ~PythonFunctionEditor();
+
+    QSize sizeHint();
 
     void LoadEditor();
 

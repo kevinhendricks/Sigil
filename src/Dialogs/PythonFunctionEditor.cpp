@@ -48,8 +48,8 @@ static const QString EMPTY_REPLACE_FUNCTION = "def replace(match, number, file_n
 
 PythonFunctionEditor::PythonFunctionEditor(QMap<QString,QVariant>& func, QWidget *parent)
     : QDialog(parent),
-      m_editor(new SourceEditor(this)),
       m_funcmap(func),
+      m_editor(new SourceEditor(this)),
       m_layout(new QVBoxLayout(this))
 {
     // setAttribute(Qt::WA_DeleteOnClose,true);
@@ -99,6 +99,13 @@ PythonFunctionEditor::~PythonFunctionEditor()
     WriteSettings();
 }
 
+
+QSize PythonFunctionEditor::sizeHint()
+{
+    return QSize(500, 500);
+}
+
+
 void PythonFunctionEditor::createFunction()
 {
     bool ok;
@@ -122,19 +129,25 @@ void PythonFunctionEditor::createFunction()
 void PythonFunctionEditor::deleteFunction()
 {
     m_safe_to_save = false;
-    qDebug() << "in deleteFunction";
+    // qDebug() << "in deleteFunction";
     QString fn = m_cb->currentText();
-    int idx = m_cb->currentIndex();
-    if (idx != -1) {
-        m_cb->removeItem(idx);
-        m_funcmap.remove(fn);
+    QMessageBox::StandardButton button_pressed;
+    button_pressed = Utility::warning(this, tr("Sigil"),
+                                      tr("Are you sure you want to delete the function?: ") + fn,
+                                      QMessageBox::Ok | QMessageBox::Cancel);
+    if (button_pressed == QMessageBox::Ok) {
+        int idx = m_cb->currentIndex();
+        if (idx != -1) {
+            m_cb->removeItem(idx);
+            m_funcmap.remove(fn);
+        }
     }
     m_safe_to_save = true;
 }
 
 void PythonFunctionEditor::useFunction()
 {
-    qDebug() << "in useFunction";
+    // qDebug() << "in useFunction";
     // write everything to json just in case
     QString fullfilepath = Utility::DefinePrefsDir() + "/replace_functions.json";
     SearchUtils::WriteFuncDicttoJSONFile(fullfilepath, m_funcmap);
@@ -148,7 +161,7 @@ void PythonFunctionEditor::useFunction()
 void PythonFunctionEditor::loadFunctionToEdit(const QString& fn)
 {
     m_safe_to_save = false;    
-    qDebug() << "in loadFunctionToEdit " << fn;    
+    // qDebug() << "in loadFunctionToEdit " << fn;    
     if (!fn.isEmpty()) {
         m_editor->clear();
         LoadEditor();
@@ -162,7 +175,7 @@ void PythonFunctionEditor::loadFunctionToEdit(const QString& fn)
 void PythonFunctionEditor::saveFunction()
 {
     if (!m_safe_to_save) return;
-    qDebug() << "in saveFunction";
+    // qDebug() << "in saveFunction";
     QString fn = m_cb->currentText();
     if (!fn.isEmpty()) {
         QString data = m_editor->toPlainText();
@@ -184,7 +197,7 @@ void PythonFunctionEditor::ReloadEditor()
 
 void PythonFunctionEditor::LoadEditor()
 {
-    qDebug() << "in LoadEditor";
+    // qDebug() << "in LoadEditor";
     int blockno = 0;
     int lineno = 1;
     QString fn = m_cb->currentText();
@@ -212,6 +225,8 @@ void PythonFunctionEditor::ReadSettings()
     QByteArray geometry = settings.value("geometry").toByteArray();
     if (!geometry.isNull()) {
         restoreGeometry(geometry);
+    } else {
+        resize(sizeHint());
     }
     settings.endGroup();
 }
