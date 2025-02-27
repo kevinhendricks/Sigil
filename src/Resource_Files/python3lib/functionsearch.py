@@ -169,6 +169,7 @@ class FunctionSearch(object):
         match = SigilMatch(text, capture_groups)
         if match.start() == -1:
             return ''
+        self.number += 1
         result = match.group(0);
         try:
             result=self.replace(match,self.number,self.bookpath,self.metadataxml,self.funcData)
