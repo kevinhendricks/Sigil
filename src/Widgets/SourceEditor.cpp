@@ -90,7 +90,10 @@ bool SourceEditor::event(QEvent* e)
             if (xmlh) xmlh->do_rehighlight();
 
             PythonSyntaxHighlighter* pyh = qobject_cast<PythonSyntaxHighlighter*>(m_Highlighter);
-            if (pyh) pyh->do_rehighlight();
+            if (pyh) {
+                qDebug()<<"detected SourceEditor palette change event and rehighlighting";
+                pyh->do_rehighlight();
+            }
         }
     }
     return QPlainTextEdit::event(e);
