@@ -63,7 +63,7 @@ SourceEditor::SourceEditor(QWidget *parent)
     m_Highlighter(nullptr)
 {
     UpdateLineNumberAreaMargin();
-    setReadOnly(true);
+    setReadOnly(false);
     setTextInteractionFlags(textInteractionFlags() | Qt::TextSelectableByKeyboard);
     setLineWrapMode(QPlainTextEdit::WidgetWidth);
     QFont cf = font();
@@ -436,6 +436,7 @@ void SourceEditor::contextMenuEvent(QContextMenuEvent *event)
 // Overridden so we can emit the FocusGained() signal.
 void SourceEditor::focusInEvent(QFocusEvent *event)
 {
+    qDebug() << "in SE focusInEvent";
     RehighlightDocument();
     emit FocusGained(this);
     QPlainTextEdit::focusInEvent(event);
@@ -445,6 +446,7 @@ void SourceEditor::focusInEvent(QFocusEvent *event)
 // Overridden so we can emit the FocusLost() signal.
 void SourceEditor::focusOutEvent(QFocusEvent *event)
 {
+    qDebug() << "in SE focusOutEvent";
     emit FocusLost(this);
     QPlainTextEdit::focusOutEvent(event);
 }
