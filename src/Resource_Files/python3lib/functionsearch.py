@@ -64,7 +64,8 @@ def read_json(jsonpath):
                 d = json.load(f)
             except SystemError:
                 pass
-            except Exception:
+            except Exception as e:
+                print(e)
                 pass
     return d
 
