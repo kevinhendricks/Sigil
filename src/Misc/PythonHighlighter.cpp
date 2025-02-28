@@ -23,7 +23,7 @@
 // SOFTWARE.
 
 #include "Misc/Utility.h"
-#include "Misc/PythonSyntaxHighlighter.h"
+#include "Misc/PythonHighlighter.h"
 
 HighlightingRule::HighlightingRule(const QString &patternStr, int n,
                                    const QTextCharFormat &matchingFormat) {
@@ -33,7 +33,7 @@ HighlightingRule::HighlightingRule(const QString &patternStr, int n,
   format = matchingFormat;
 }
 
-PythonSyntaxHighlighter::PythonSyntaxHighlighter(QObject *parent)
+PythonHighlighter::PythonHighlighter(QObject *parent)
     : QSyntaxHighlighter(parent) {
   keywords = QStringList() << "and"
                            << "assert"
@@ -111,13 +111,13 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(QObject *parent)
   initializeRules();
 }
 
-void PythonSyntaxHighlighter::do_rehighlight()
+void PythonHighlighter::do_rehighlight()
 {
     initializeRules();
     rehighlight();
 }
 
-void PythonSyntaxHighlighter::initializeRules()
+void PythonHighlighter::initializeRules()
 {
   basicStyles.clear();
   if (Utility::IsDarkMode()) {
@@ -192,7 +192,7 @@ void PythonSyntaxHighlighter::initializeRules()
           "numbers"))); // r'\b[+-]?[0-9]+(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\b'
 }
 
-void PythonSyntaxHighlighter::highlightBlock(const QString &text) {
+void PythonHighlighter::highlightBlock(const QString &text) {
   for (const HighlightingRule &rule : rules) {
     QRegularExpressionMatchIterator matchIterator =
         rule.pattern.globalMatch(text);
@@ -209,7 +209,7 @@ void PythonSyntaxHighlighter::highlightBlock(const QString &text) {
         matchMultiline(text, triDoubleQuote, 2, basicStyles.value("string2"));
 }
 
-bool PythonSyntaxHighlighter::matchMultiline(
+bool PythonHighlighter::matchMultiline(
     const QString &text, const QRegularExpression &delimiter, const int inState,
     const QTextCharFormat &style) {
   QRegularExpressionMatch match;
@@ -234,7 +234,7 @@ bool PythonSyntaxHighlighter::matchMultiline(
 }
 
 const QTextCharFormat
-PythonSyntaxHighlighter::getTextCharFormat(const QString &colorName,
+PythonHighlighter::getTextCharFormat(const QString &colorName,
                                            const QString &style) {
   QTextCharFormat charFormat;
   QColor color(colorName);

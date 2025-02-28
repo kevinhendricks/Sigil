@@ -20,8 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef PYTHONSYNTAXHIGHLIGHTER_H
-#define PYTHONSYNTAXHIGHLIGHTER_H
+#ifndef PYTHONHIGHLIGHTER_H
+#define PYTHONHIGHLIGHTER_H
 
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
@@ -37,10 +37,10 @@ public:
   QTextCharFormat format;
 };
 
-class PythonSyntaxHighlighter : public QSyntaxHighlighter {
+class PythonHighlighter : public QSyntaxHighlighter {
   Q_OBJECT
 public:
-  PythonSyntaxHighlighter(QObject *parent);
+  PythonHighlighter(QObject *parent);
   const QTextCharFormat getTextCharFormat(const QString &colorName,
                                           const QString &style = QString());
   void initializeRules();
@@ -61,4 +61,4 @@ private:
   QRegularExpression triDoubleQuote;
 };
 
-#endif // PYTHONSYNTAXHIGHLIGHTER_H
+#endif // PYTHONHIGHLIGHTER_H

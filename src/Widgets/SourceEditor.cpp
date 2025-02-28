@@ -43,7 +43,7 @@
 
 #include "Misc/XHTMLHighlighter.h"
 #include "Misc/CSSHighlighter.h"
-#include "Misc/PythonSyntaxHighlighter.h"
+#include "Misc/PythonHighlighter.h"
 #include "MainUI/MainWindow.h"
 #include "Misc/SettingsStore.h"
 #include "Misc/Utility.h"
@@ -183,7 +183,7 @@ void SourceEditor::DoHighlightDocument(HighlighterType high_type)
         } else if (high_type == SourceEditor::Highlight_CSS) {
             m_Highlighter = new CSSHighlighter(this);
         } else if (high_type == SourceEditor::Highlight_PYTHON) {
-            m_Highlighter = new PythonSyntaxHighlighter(this);
+            m_Highlighter = new PythonHighlighter(this);
         }
     }
     if (m_Highlighter) {
@@ -215,11 +215,8 @@ void SourceEditor::RehighlightDocument()
         XHTMLHighlighter* xmlh = qobject_cast<XHTMLHighlighter*>(m_Highlighter);
         if (xmlh) xmlh->do_rehighlight();
 
-        PythonSyntaxHighlighter* pyh = qobject_cast<PythonSyntaxHighlighter*>(m_Highlighter);
-        if (pyh) {
-		    qDebug()<<"detected palette change event and rehighlighting";
-            pyh->do_rehighlight();
-        }
+        PythonHighlighter* pyh = qobject_cast<PythonHighlighter*>(m_Highlighter);
+        if (pyh) pyh->do_rehighlight();
         document()->blockSignals(false);
     }
 }
@@ -430,7 +427,6 @@ void SourceEditor::contextMenuEvent(QContextMenuEvent *event)
 // Overridden so we can emit the FocusGained() signal.
 void SourceEditor::focusInEvent(QFocusEvent *event)
 {
-    qDebug() << "in SE focusInEvent";
     RehighlightDocument();
     emit FocusGained(this);
     QPlainTextEdit::focusInEvent(event);
@@ -440,7 +436,6 @@ void SourceEditor::focusInEvent(QFocusEvent *event)
 // Overridden so we can emit the FocusLost() signal.
 void SourceEditor::focusOutEvent(QFocusEvent *event)
 {
-    qDebug() << "in SE focusOutEvent";
     emit FocusLost(this);
     QPlainTextEdit::focusOutEvent(event);
 }
