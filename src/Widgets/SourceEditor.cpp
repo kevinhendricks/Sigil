@@ -38,7 +38,6 @@
 #include <QScrollBar>
 #include <QTextBlock>
 #include <QPlainTextEdit>
-#include <QKeyEvent>
 #include <QSyntaxHighlighter>
 #include <QDebug>
 
@@ -81,21 +80,6 @@ SourceEditor::~SourceEditor()
 
 bool SourceEditor::event(QEvent* e)
 {
-    if (e->type() == QEvent::PaletteChange) {
-        if (m_Highlighter) {
-            CSSHighlighter* cssh = qobject_cast<CSSHighlighter*>(m_Highlighter);
-            if (cssh) cssh->do_rehighlight();
-
-            XHTMLHighlighter* xmlh = qobject_cast<XHTMLHighlighter*>(m_Highlighter);
-            if (xmlh) xmlh->do_rehighlight();
-
-            PythonSyntaxHighlighter* pyh = qobject_cast<PythonSyntaxHighlighter*>(m_Highlighter);
-            if (pyh) {
-                qDebug()<<"detected SourceEditor palette change event and rehighlighting";
-                pyh->do_rehighlight();
-            }
-        }
-    }
     return QPlainTextEdit::event(e);
 }
 
@@ -225,7 +209,17 @@ void SourceEditor::RehighlightDocument()
         // because we do not want the contentsChanged() signal to be fired
         // which would mark the underlying resource as needing saving.
         document()->blockSignals(true);
-        m_Highlighter->rehighlight();
+        CSSHighlighter* cssh = qobject_cast<CSSHighlighter*>(m_Highlighter);
+        if (cssh) cssh->do_rehighlight();
+
+        XHTMLHighlighter* xmlh = qobject_cast<XHTMLHighlighter*>(m_Highlighter);
+        if (xmlh) xmlh->do_rehighlight();
+
+        PythonSyntaxHighlighter* pyh = qobject_cast<PythonSyntaxHighlighter*>(m_Highlighter);
+        if (pyh) {
+		    qDebug()<<"detected palette change event and rehighlighting";
+            pyh->do_rehighlight();
+        }
         document()->blockSignals(false);
     }
 }

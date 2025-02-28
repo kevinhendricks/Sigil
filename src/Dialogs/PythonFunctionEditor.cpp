@@ -184,7 +184,7 @@ void PythonFunctionEditor::saveFunction()
     }
 }
 
-// This is needed on macOS to force the 
+// This is needed on all platforms to force the 
 // syntax highlighting to start from scratch
 // when dark to light mode is switched dynamically
 void PythonFunctionEditor::ReloadEditor()
@@ -253,10 +253,10 @@ void PythonFunctionEditor::reject()
 
 void PythonFunctionEditor::connectSignalsToSlots()
 {
-#ifdef Q_OS_MAC
+    // this should now work correctly on all platforms
     MainApplication *mainApplication = qobject_cast<MainApplication *>(qApp);
     connect(mainApplication, SIGNAL(applicationPaletteChanged()), this, SLOT(ReloadEditor()));
-#endif
+
     connect(m_butnew, SIGNAL(clicked()), this, SLOT(createFunction()));
     connect(m_butdel, SIGNAL(clicked()), this, SLOT(deleteFunction()));
     connect(m_butuse, SIGNAL(clicked()), this, SLOT(useFunction()));
