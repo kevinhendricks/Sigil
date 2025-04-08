@@ -41,7 +41,6 @@
 #include <QStyleFactory>
 #include <QtWebEngineWidgets>
 #include <QtWebEngineCore>
-#include <QWebEngineUrlScheme>
 
 #include "Misc/PluginDB.h"
 #include "Misc/UILanguage.h"
@@ -370,16 +369,6 @@ int main(int argc, char *argv[])
     update_ini_file_if_needed(Utility::DefinePrefsDir() + "/" + SEARCHES_V2_SETTINGS_FILE,
                               Utility::DefinePrefsDir() + "/" + SEARCHES_V6_SETTINGS_FILE);
 
-    // register the our own url scheme (this is required since Qt 5.12)
-    QWebEngineUrlScheme sigilScheme("sigil");
-    sigilScheme.setFlags(QWebEngineUrlScheme::SecureScheme |
-                         QWebEngineUrlScheme::LocalScheme |
-                         QWebEngineUrlScheme::LocalAccessAllowed |
-                         QWebEngineUrlScheme::ContentSecurityPolicyIgnored);
-    // sigilScheme.setSyntax(QWebEngineUrlScheme::Syntax::Host);
-    sigilScheme.setSyntax(QWebEngineUrlScheme::Syntax::Path);
-    QWebEngineUrlScheme::registerScheme(sigilScheme);
-
     // many qtbugs related to mixing 32 and 64 bit qt apps when shader disk cache is used
     // Only use if using Qt5.9.0 or higher
     QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache);
@@ -703,7 +692,7 @@ int main(int argc, char *argv[])
 #endif //!defined(Q_OS_WIN32) && !defined(Q_OS_MAC)
 
         // Create the required QWebEngineProfiles, Initialize the settings
-        // just once, installing both URLInterceptor and URLSchemeHandler as needed
+        // just once, installing the URLInterceptor as needed
         // to bypass 2mb url limit (singleton)
         WebProfileMgr* profile_mgr = WebProfileMgr::instance();
         Q_UNUSED(profile_mgr);

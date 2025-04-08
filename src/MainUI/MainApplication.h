@@ -30,7 +30,6 @@
 #include <QEvent>
 #include <QtWidgets/QApplication>
 #include <QString>
-#include <QHash>
 #include <QTimer>
 
 class MainApplication : public QApplication
@@ -42,8 +41,6 @@ public:
 
     bool isDarkMode() { return m_isDark; }
 
-    void saveInPreviewCache(const QString &key, const QString& xhtml);
-    QString loadFromPreviewCache(const QString &key);
     void updateAccumulatedQss(QString &qss) const;
     bool AlwaysUseNFC(){ return m_AlwaysUseNFC; };
     
@@ -63,7 +60,6 @@ private:
     void windowsDarkThemeChange();
     void windowsLightThemeChange();
     bool m_isDark;
-    QHash<QString, QString> m_PreviewCache;
     mutable QString m_accumulatedQss;
     QTimer * m_PaletteChangeTimer;
     bool m_AlwaysUseNFC = true;

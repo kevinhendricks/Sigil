@@ -178,15 +178,7 @@ void ViewPreview::CustomSetDocument(const QString &path, const QString &html)
     // Sigil as well as catering for section splits etc.
     QString replaced_html = html;
     replaced_html = replaced_html.replace("<html>", "<html xmlns=\"http://www.w3.org/1999/xhtml\">");
-    MainApplication *mainApplication = qobject_cast<MainApplication *>(qApp);
-    QString key = Utility::CreateUUID();
-    mainApplication->saveInPreviewCache(key, replaced_html);
-    QUrl tgturl = QUrl::fromLocalFile(path);
-    tgturl.setScheme("sigil");
-    tgturl.setHost("");
-    tgturl.setQuery("sigilpreview=" + key); 
-    page()->load(tgturl);
-    // setContent(replaced_html.toUtf8(), "application/xhtml+xml;charset=UTF-8", QUrl::fromLocalFile(path));
+    setContent(replaced_html.toUtf8(), "application/xhtml+xml;charset=UTF-8", QUrl::fromLocalFile(path));
 }
 
 bool ViewPreview::IsLoadingFinished()

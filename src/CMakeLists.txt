@@ -337,8 +337,6 @@ set( MISC_FILES
     Misc/UpdateChecker.h
     Misc/URLInterceptor.cpp
     Misc/URLInterceptor.h
-    Misc/URLSchemeHandler.cpp
-    Misc/URLSchemeHandler.h
     Misc/Utility.cpp
     Misc/Utility.h
     Misc/SearchUtils.cpp

@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2024 Kevin B. Hendricks, Stratford Ontario Canada
+**  Copyright (C) 2024-2025 Kevin B. Hendricks, Stratford Ontario Canada
 **
 **  This file is part of Sigil.
 **
@@ -27,7 +27,6 @@
 
 #include "Misc/Utility.h"
 #include "Misc/SettingsStore.h"
-#include "Misc/URLSchemeHandler.h"
 #include "Misc/URLInterceptor.h"
 #include "Misc/WebProfileMgr.h"
 
@@ -88,8 +87,7 @@ void WebProfileMgr::InitializeDefaultSettings(QWebEngineSettings* web_settings)
 
 WebProfileMgr::WebProfileMgr()
 {
-    // Create URLSchemeHandler and URLInterceptor
-    m_URLhandler = new URLSchemeHandler();
+    // Create URLInterceptor
     m_URLint = new URLInterceptor();
     
     // initialize the defaultProfile to be restrictive for security
@@ -119,12 +117,11 @@ WebProfileMgr::WebProfileMgr()
         storageDir.mkpath(localStorePath);
     }
     m_preview_profile->setPersistentStoragePath(localStorePath);
-    // Use both our URLInterceptor and our URLSchemeHandler
-    m_preview_profile->installUrlSchemeHandler("sigil", m_URLhandler);
+    // Use URLInterceptor
     m_preview_profile->setUrlRequestInterceptor(m_URLint);
 
     // create the profile for OneTime
-    m_onetime_profile = new QWebEngineProfile();
+    m_onetime_profile = new QWebEngineProfile("OneTime", nullptr);
     InitializeDefaultSettings(m_onetime_profile->settings());
     m_onetime_profile->settings()->setDefaultTextEncoding("UTF-8");  
     m_onetime_profile->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);

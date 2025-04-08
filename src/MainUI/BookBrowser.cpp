@@ -329,14 +329,6 @@ Resource *BookBrowser::GetUrlResource(const QUrl &url)
         QString main_folder_path = m_Book->GetFolderKeeper()->GetFullPathToMainFolder();
         // Note main_folder_path *never* ends with a path separator - see Misc/TempFolder.cpp
         bookpath = fullfilepath.right(fullfilepath.length() - main_folder_path.length() - 1);
-    } else if (url.scheme() == "sigil") {
-        QUrl newurl(url);
-        newurl.setScheme("file");
-        DBG qDebug() << "what? " << newurl <<  newurl.path();
-        QString fullfilepath = newurl.toLocalFile();
-        QString main_folder_path = m_Book->GetFolderKeeper()->GetFullPathToMainFolder();
-        // Note main_folder_path *never* ends with a path separator - see Misc/TempFolder.cpp
-        bookpath = fullfilepath.right(fullfilepath.length() - main_folder_path.length() - 1);
     }
     if (!bookpath.isEmpty()) {
         try {

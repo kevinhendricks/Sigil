@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2020-2023 Kevin B. Hendricks, Stratford, ON, Canada
+**  Copyright (C) 2020-2025 Kevin B. Hendricks, Stratford, ON, Canada
 **
 **  This file is part of Sigil.
 **
@@ -30,7 +30,7 @@
 #include "BookManipulation/FolderKeeper.h"
 #include "Misc/URLInterceptor.h"
 
-#define DBG if(0)
+#define DBG if(1)
 
 URLInterceptor::URLInterceptor(QObject *parent)
     : QWebEngineUrlRequestInterceptor(parent)
@@ -40,13 +40,14 @@ URLInterceptor::URLInterceptor(QObject *parent)
 void URLInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
 {
     // Debug:  output all requests
-    DBG qDebug() << "-----";
-    DBG qDebug() << "method: " << info.requestMethod();
-    DBG qDebug() << "party: " << info.firstPartyUrl();
-    DBG qDebug() << "request" << info.requestUrl();
-    DBG qDebug() << "navtype: " << info.navigationType();
-    DBG qDebug() << "restype: " << info.resourceType();
-    DBG qDebug() << "ActiveWindow: " <<  qApp->activeWindow();
+    DBG qDebug() << "    ";
+    DBG qDebug() << "URLInterceptor";
+    DBG qDebug() << "    method: " << info.requestMethod();
+    DBG qDebug() << "    1stparty: " << info.firstPartyUrl();
+    DBG qDebug() << "    request: " << info.requestUrl();
+    DBG qDebug() << "    navtype: " << info.navigationType();
+    DBG qDebug() << "    restype: " << info.resourceType();
+    DBG qDebug() << "    ActiveWindow: " <<  qApp->activeWindow();
 
     if (info.requestMethod() != "GET") {
         info.block(true);
@@ -56,17 +57,6 @@ void URLInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
     
     QUrl destination(info.requestUrl());
     QUrl sourceurl(info.firstPartyUrl());
-
-    // note: need to handle our "sigil" scheme but toLocalFile will NOT work on a "sigil" scheme url
-    // so temporarily remap them to local file scheme for the purposes of this routine
-    if (destination.scheme() == "sigil") {
-        destination.setScheme("file");
-        destination.setQuery(QString());
-    }
-    if (sourceurl.scheme() == "sigil") {
-        sourceurl.setScheme("file");
-        sourceurl.setQuery(QString());
-    }
  
     // Finally let the navigation type determine what to verify against:
     // Use firstPartyURL when NavigationTypeLink or NavigationTypeOther (ie. a true source url)
@@ -75,8 +65,7 @@ void URLInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
         sourceurl = destination;
     }
 
-    // verify all url file and sigil schemes before allowing
-    // if ((destination.scheme() == "file") || (destination.scheme() == "sigil")) {
+    // verify all url file schemes before allowing
     if (destination.scheme() == "file") {
         // find the relavent MainWindow
         QString bookfolder;
@@ -98,12 +87,12 @@ void URLInterceptor::interceptRequest(QWebEngineUrlRequestInfo &info)
                         if (sourcefolder.startsWith(path_to_book)) {
                             bookfolder = path_to_book;
                             mathjaxfolder = path_to_mathjax;
-                            DBG qDebug() << "mainwin: " <<  mw;
-                            DBG qDebug() << "book: " << bookfolder;
-                            DBG qDebug() << "mathjax: " << mathjaxfolder;
-                            DBG qDebug() << "usercss: " << usercssfolder;
-                            DBG qDebug() << "party: " << info.firstPartyUrl();
-                            DBG qDebug() << "source: " << sourcefolder;
+                            DBG qDebug() << "        mainwin: " <<  mw;
+                            DBG qDebug() << "        book: " << bookfolder;
+                            DBG qDebug() << "        mathjax: " << mathjaxfolder;
+                            DBG qDebug() << "        usercss: " << usercssfolder;
+                            DBG qDebug() << "        party: " << info.firstPartyUrl();
+                            DBG qDebug() << "        source: " << sourcefolder;
                             break;
                         }
                     }
