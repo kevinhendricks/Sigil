@@ -55,6 +55,7 @@
 #include "BookManipulation/Index.h"
 #include "BookManipulation/FolderKeeper.h"
 #include "Dialogs/About.h"
+#include "Dialogs/AddSemantics.h"
 #include "Dialogs/ClipEditor.h"
 #include "Dialogs/ClipboardHistorySelector.h"
 #include "Dialogs/DeleteStyles.h"
@@ -93,6 +94,7 @@
 #include "Misc/HTMLSpellCheckML.h"
 #include "Misc/KeyboardShortcutManager.h"
 #include "Misc/Landmarks.h"
+#include "Misc/AriaRoles.h"
 #include "Misc/MediaTypes.h"
 #include "Misc/OpenExternally.h"
 #include "Misc/Plugin.h"
@@ -3253,6 +3255,41 @@ void MainWindow::InsertId()
     }
 }
 
+
+void MainWindow::InsertRole()
+{
+    SaveTabData();
+    ShowMessageOnStatusBar();
+
+    FlowTab *flow_tab = GetCurrentFlowTab();
+    if (!flow_tab || !flow_tab->InsertRoleEnabled()) {
+        Utility::warning(this, tr("Sigil"), tr("You cannot insert an aria role at this position."));
+        return;
+    }
+
+    QString tagname = flow_tab->GetCurrentTag();
+    
+    AddSemantics addmeaning(AriaRoles::instance()->GetCodeMap(), "", this);
+
+    if (addmeaning.exec() == QDialog::Accepted) {
+        QStringList codes = addmeaning.GetSelectedEntries();
+        if (!codes.isEmpty()) {
+            QString new_code = codes.at(0);
+            QStringList allowed_tags = AriaRoles::instance()->AllowedTags(new_code);
+            if (!allowed_tags.isEmpty()) {
+                if (!allowed_tags.contains(tagname)) {
+                    Utility::warning(this, tr("Sigil"), tr("The selected role can not be used on this tag."));
+                    return;
+                }
+                if (!flow_tab->InsertRole(new_code)) {
+                    Utility::warning(this, tr("Sigil"), tr("You cannot insert an aria role at this position."));
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void MainWindow::InsertHyperlink()
 {
     SaveTabData();
@@ -4478,6 +4515,7 @@ void MainWindow::SetStateActionsCodeView()
     ui.actionInsertFile->setEnabled(true);
     ui.actionInsertSpecialCharacter->setEnabled(true);
     ui.actionInsertId->setEnabled(true);
+    ui.actionInsertRole->setEnabled(true);
     ui.actionInsertHyperlink->setEnabled(true);
     ui.actionInsertClosingTag->setEnabled(true);
     ui.actionUndo->setEnabled(true);
@@ -4569,6 +4607,7 @@ void MainWindow::SetStateActionsRawView()
     ui.actionInsertFile->setEnabled(false);
     ui.actionInsertSpecialCharacter->setEnabled(true);
     ui.actionInsertId->setEnabled(false);
+    ui.actionInsertRole->setEnabled(false);
     ui.actionInsertHyperlink->setEnabled(false);
     ui.actionInsertClosingTag->setEnabled(false);
     ui.actionUndo->setEnabled(true);
@@ -4641,6 +4680,7 @@ void MainWindow::SetStateActionsStaticView()
     ui.actionInsertFile->setEnabled(false);
     ui.actionInsertSpecialCharacter->setEnabled(false);
     ui.actionInsertId->setEnabled(false);
+    ui.actionInsertRole->setEnabled(false);
     ui.actionInsertHyperlink->setEnabled(false);
     ui.actionInsertClosingTag->setEnabled(false);
     ui.actionUndo->setEnabled(false);
@@ -6096,10 +6136,11 @@ void MainWindow::ExtendUI()
     sm->registerAction(this, ui.actionCopy, "MainWindow.Copy");
     sm->registerAction(this, ui.actionPaste, "MainWindow.Paste");
     sm->registerAction(this, ui.actionPasteClipboardHistory, "MainWindow.PasteClipboardHistory");
+    sm->registerAction(this, ui.actionInsertId, "MainWindow.InsertId");
+    sm->registerAction(this, ui.actionInsertRole, "MainWindow.InsertRole");
     sm->registerAction(this, ui.actionDeleteLine, "MainWindow.DeleteLine");
     sm->registerAction(this, ui.actionInsertFile, "MainWindow.InsertFile");
     sm->registerAction(this, ui.actionInsertSpecialCharacter, "MainWindow.InsertSpecialCharacter");
-    sm->registerAction(this, ui.actionInsertId, "MainWindow.InsertId");
     sm->registerAction(this, ui.actionInsertHyperlink, "MainWindow.InsertHyperlink");
     sm->registerAction(this, ui.actionMarkForIndex, "MainWindow.MarkForIndex");
     sm->registerAction(this, ui.actionSplitSection, "MainWindow.SplitSection");
@@ -6445,6 +6486,7 @@ void MainWindow::ConnectSignalsToSlots()
     connect(ui.actionInsertFile,      SIGNAL(triggered()), this, SLOT(InsertFileDialog()));
     connect(ui.actionInsertSpecialCharacter, SIGNAL(triggered()), this, SLOT(InsertSpecialCharacter()));
     connect(ui.actionInsertId,        SIGNAL(triggered()),  this,   SLOT(InsertId()));
+    connect(ui.actionInsertRole,      SIGNAL(triggered()),  this,   SLOT(InsertRole()));
     connect(ui.actionInsertHyperlink, SIGNAL(triggered()),  this,   SLOT(InsertHyperlink()));
     connect(ui.actionPreferences,     SIGNAL(triggered()), this, SLOT(PreferencesDialog()));
     // Search

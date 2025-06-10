@@ -409,6 +409,8 @@ private slots:
 
     void InsertId();
 
+    void InsertRole();
+
     void InsertHyperlink();
 
     void MarkForIndex();

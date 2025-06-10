@@ -60,6 +60,7 @@
 #include "Misc/SettingsStore.h"
 #include "Misc/SpellCheck.h"
 #include "Misc/HTMLSpellCheck.h"
+#include "Misc/AriaRoles.h"
 #include "Misc/Utility.h"
 #include "Parsers/HTMLStyleInfo.h"
 #include "PCRE2/PCRECache.h"
@@ -2099,6 +2100,28 @@ bool CodeViewEditor::IsInsertIdAllowed()
     return true;
 }
 
+QString CodeViewEditor::GetCurrentSingleOrOpenTagName()
+{
+    int pos = textCursor().selectionStart();
+    return GetOpeningTagName(pos);
+}
+
+bool CodeViewEditor::IsInsertRoleAllowed()
+{
+    int pos = textCursor().selectionStart();
+
+    if (!IsPositionInBody(pos)) {
+        return false;
+    }
+
+    // Only allow if in opening or single tag
+    QString tag_name = GetOpeningTagName(pos);
+
+    if (tag_name.isEmpty()) return false;
+
+    return true;
+}
+
 bool CodeViewEditor::IsInsertHyperlinkAllowed()
 {
     int pos = textCursor().selectionStart();
@@ -2155,6 +2178,23 @@ bool CodeViewEditor::InsertId(const QString &attribute_value)
     }
 
     return InsertTagAttribute(element_name, attribute_name, attribute_value, tag_list);
+}
+
+bool CodeViewEditor::InsertRole(const QString &attribute_value)
+{
+    int pos = textCursor().selectionStart();
+    QString element_name = GetOpeningTagName(pos);
+    QString attribute_name = "role";
+    QStringList tag_list = AriaRoles::instance()->AllowedTags(attribute_value);
+    QString etype = AriaRoles::instance()->EpubTypeMapping(attribute_value);
+    bool rv = InsertTagAttribute(element_name, attribute_name, attribute_value, tag_list);
+    if (rv) {
+        if (!etype.isEmpty()) {
+            attribute_name = "epub:type";
+            InsertTagAttribute(element_name, attribute_name, etype, tag_list);
+        }
+    }
+    return rv;
 }
 
 bool CodeViewEditor::InsertHyperlink(const QString &attribute_value)

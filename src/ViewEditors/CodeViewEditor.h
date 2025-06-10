@@ -133,9 +133,13 @@ public:
 
     bool IsInsertFileAllowed();
 
+    QString GetCurrentSingleOrOpenTagName();
+    
     bool InsertId(const QString &attribute_value);
+    bool InsertRole(const QString &attribute_value);
     bool InsertHyperlink(const QString &attribute_value);
     bool IsInsertIdAllowed();
+    bool IsInsertRoleAllowed();
     bool IsInsertHyperlinkAllowed();
     bool InsertTagAttribute(const QString &element_name, const QString &attribute_name, 
                             const QString &attribute_value, const QStringList &tag_list, 

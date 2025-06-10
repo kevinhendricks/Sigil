@@ -459,6 +459,14 @@ bool FlowTab::InsertIdEnabled()
     return false;
 }
 
+bool FlowTab::InsertRoleEnabled()
+{
+    if (m_wCodeView) {
+        return m_wCodeView->IsInsertRoleAllowed();
+    }
+    return false;
+}
+
 bool FlowTab::InsertHyperlinkEnabled()
 {
     if (m_wCodeView) {
@@ -823,10 +831,26 @@ QString FlowTab::GetSelectedText()
     return "";
 }
 
+QString FlowTab::GetCurrentTag()
+{
+    if (m_wCodeView) {
+        return m_wCodeView->GetCurrentSingleOrOpenTagName();
+    } 
+    return "";
+}
+
 bool FlowTab::InsertId(const QString &id)
 {
     if (m_wCodeView) {
         return m_wCodeView->InsertId(id);
+    } 
+    return false;
+}
+
+bool FlowTab::InsertRole(const QString &role)
+{
+    if (m_wCodeView) {
+        return m_wCodeView->InsertRole(role);
     } 
     return false;
 }
