@@ -4508,6 +4508,7 @@ void MainWindow::UpdateUIOnTabCountChange()
 
 void MainWindow::SetStateActionsCodeView()
 {
+    bool editing_epub3 = m_Book->GetOPF()->GetEpubVersion().startsWith("3");
     ui.actionPrintPreview->setEnabled(true);
     ui.actionPrint->setEnabled(true);
     ui.actionSplitSection->setEnabled(true);
@@ -4515,7 +4516,7 @@ void MainWindow::SetStateActionsCodeView()
     ui.actionInsertFile->setEnabled(true);
     ui.actionInsertSpecialCharacter->setEnabled(true);
     ui.actionInsertId->setEnabled(true);
-    ui.actionInsertRole->setEnabled(true);
+    ui.actionInsertRole->setEnabled(editing_epub3);
     ui.actionInsertHyperlink->setEnabled(true);
     ui.actionInsertClosingTag->setEnabled(true);
     ui.actionUndo->setEnabled(true);
