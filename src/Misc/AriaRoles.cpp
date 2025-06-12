@@ -218,6 +218,7 @@ void AriaRoles::SetAriaRolesMap()
         tr("Preamble") << "preamble" << tr("A section at the beginning of a work, typically containing introductory and/or explanatory prose regarding the scope or nature of the work's content. [epub:type ONLY]") <<
         tr("Preface") << "doc-preface" << tr("An introductory section that precedes the work, typically written by the author of the work.") <<
         tr("Prologue") << "doc-prologue" << tr("An introductory section that sets the background to a work, typically part of the narrative.") <<
+        tr("Pull Quote") << "doc-pullquote" << tr("A distinctively placed or highlighted quotation from the current content designed to draw attnetion to a topic or highlight a key point.") <<
         tr("Questions and Answers") << "doc-qna" << tr("A section of content structured as a series of questions and answers, such as an interview or list of frequently asked questions.") <<
         tr("Subtitle") << "doc-subtitle" << tr("An explanatory or alternate title for the work, or a section or components within it.") <<
         tr("Tip") << "doc-tip" << tr("Helpful information that clarifies some aspect of the content or assists in comprehension.") <<
@@ -330,6 +331,7 @@ void AriaRoles::SetCodeToRawTitleMap()
     m_CodeToRawTitle[ "preamble"            ] = "Preamble";
     m_CodeToRawTitle[ "doc-preface"         ] = "Preface";
     m_CodeToRawTitle[ "doc-prologue"        ] = "Prologue";
+    m_CodeToRawTitle[ "doc-pullquote"       ] = "Pull Quote";
     m_CodeToRawTitle[ "doc-qna"             ] = "Questions and Answers";
     m_CodeToRawTitle[ "doc-subtitle"        ] = "Subtitle";
     m_CodeToRawTitle[ "doc-tip"             ] = "Tip";
