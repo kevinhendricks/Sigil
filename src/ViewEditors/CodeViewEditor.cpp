@@ -2187,8 +2187,14 @@ bool CodeViewEditor::InsertRole(const QString &attribute_value)
     QString attribute_name = "role";
     QStringList tag_list = AriaRoles::instance()->AllowedTags(attribute_value);
     QString etype = AriaRoles::instance()->EpubTypeMapping(attribute_value);
+    if (etype == attribute_value) {
+        // this is an epub:type only attribute
+        attribute_name = "epub:type";
+        return InsertTagAttribute(element_name, attribute_name, attribute_value, tag_list);
+    }
+    // This could have both aria role and epub:type
     bool rv = InsertTagAttribute(element_name, attribute_name, attribute_value, tag_list);
-    if (rv) {
+    if (rv) { 
         if (!etype.isEmpty()) {
             attribute_name = "epub:type";
             InsertTagAttribute(element_name, attribute_name, etype, tag_list);
@@ -3391,6 +3397,7 @@ QString CodeViewEditor::ProcessAttribute(const QString &attribute_name,
     // qDebug() << " found attribute: " << ainfo.aname << ainfo.avalue << ainfo.pos << ainfo.len;
     // set absolute attribute start and end locations in text
     int attribute_start = ti.pos + ti.len - 1;  // right before the tag '>'
+    if (ti.ttype == "single") attribute_start--; // right before the single tag '/'s
     int attribute_end = attribute_start;
     if (ainfo.pos != -1) {
         // attribute exists

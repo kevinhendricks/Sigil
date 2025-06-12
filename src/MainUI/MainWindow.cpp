@@ -55,7 +55,7 @@
 #include "BookManipulation/Index.h"
 #include "BookManipulation/FolderKeeper.h"
 #include "Dialogs/About.h"
-#include "Dialogs/AddSemantics.h"
+#include "Dialogs/AddRoles.h"
 #include "Dialogs/ClipEditor.h"
 #include "Dialogs/ClipboardHistorySelector.h"
 #include "Dialogs/DeleteStyles.h"
@@ -3269,7 +3269,7 @@ void MainWindow::InsertRole()
 
     QString tagname = flow_tab->GetCurrentTag();
     
-    AddSemantics addmeaning(AriaRoles::instance()->GetCodeMap(), "", this);
+    AddRoles addmeaning(tagname, this);
 
     if (addmeaning.exec() == QDialog::Accepted) {
         QStringList codes = addmeaning.GetSelectedEntries();

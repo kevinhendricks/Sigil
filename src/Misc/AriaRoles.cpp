@@ -38,6 +38,7 @@ static const QStringList SECTION_SIDE_TAGS = QStringList() << "section" << "div"
 static const QStringList SIDE_TAGS         = QStringList() << "aside";
 static const QStringList NAV_TAGS          = QStringList() << "section" << "div" << "nav";
 static const QStringList CVR_TAGS          = QStringList() << "img";
+static const QStringList ENTRY_TAGS        = QStringList() << "p" << "li" << "dt" << "dd";
 
 static const QStringList NAV_ROLES          = QStringList() << "doc-index" << "doc-pagelist" << "doc-toc";
 static const QStringList REF_ROLES          = QStringList() << "doc-backlink" << "doc-biblioref" <<
@@ -156,7 +157,12 @@ QStringList AriaRoles::GetSortedNames()
     return m_sortedNames;
 }
 
-const QHash<QString, DescriptiveInfo> & AriaRoles::GetCodeMap()
+QStringList AriaRoles::GetAllCodes()
+{
+    return m_CodeMap.keys();
+}
+
+const QHash<QString, DescriptiveInfo>& AriaRoles::GetCodeMap()
 {
     return m_CodeMap;
 }
@@ -180,6 +186,7 @@ void AriaRoles::SetAriaRolesMap()
         tr("Appendix") << "doc-appendix" << tr("A section of supplemental information located after the primary content that informs the content but is not central to it.") <<
         tr("Back Link") << "doc-backlink" << tr("A link that allows the user to return to a related location in the content (e.g., from a footnote to its references of from a glossary defintion to where a term is used.)") <<
         tr("Bibliography") << "doc-bibliography" << tr("A list of external references cited in the work, which may be to print or digital sources.") <<
+        tr("Bibliography Entry") << "biblioentry" << tr("A single reference to an external source in a bibliography. [epub:type ONLY]") <<
         tr("Bibliography Reference") << "doc-biblioref" << tr("A reference to a bibliography entry.") <<
         tr("Chapter") << "doc-chapter" << tr("A major thematic section of content in a work.") <<
         tr("Colophon") << "doc-colophon" << tr("A short section of production notes particular to the edition (e.g., describing the typeface used), often located at the end of a work.") <<
@@ -188,12 +195,14 @@ void AriaRoles::SetAriaRolesMap()
         tr("Credit") << "doc-credit" << tr("An ackknowledment of the source of integrated content from third-party sources, such as photos.  Typically identifies the creator, copyright, and any restrictions on reuse.") <<
         tr("Credits") << "doc-credits" << tr("A collection of credits.") <<
         tr("Dedication") << "doc-dedication" << tr("An inscription at the front of the work, typically addressed in tribute to one or more persons close to the author.") <<
+        tr("Endnote") << "endnote" << tr("One of a collection of notes that occur at the end of a work, or a section within it that provides additional context to a referenced passage of text. [epub:type ONLY]") <<
         tr("Endnotes") << "doc-endnotes" << tr("A collection of notes at the end of a work or a section within it.") <<
         tr("Epigraph") << "doc-epigraph" << tr("A quotation set at the start of the work or a section that establishes the theme or sets the mood.") <<
         tr("Epilogue") << "doc-epilogue" << tr("A concluding section of narrative that wraps up or comments on the actions and events of the work, typically from a future perspective.") <<
         tr("Errata") << "doc-errata" << tr("A set of corrections discovered after initial publication of the work, sometimes referred to as corrigenda.") <<
-        tr("Example") << "doc-example" << tr("An illustration of a key concept of the work, such as a code listing, case study or problem.") <<
+        tr("Example") << "doc-example" << tr("An illustration of a key concept of the work, such as a code listing, case study or problem. [aria role ONLY]") <<
         tr("Footnote") << "doc-footnote" << tr("Ancillary information, such as a citation or commentary, that provides additional context to a referenced passage of text.") <<
+        tr("Footnotes") << "footnotes" << tr("A collection of footnotes. [epub:type ONLY]") <<
         tr("Foreword") << "doc-foreword" << tr("An introductory section that precedes the work, typically not written by the author of the work.") <<
         tr("Glossary") << "doc-glossary" << tr("A brief dictionary of new, uncommon, or specialized terms used in the content.") <<
         tr("Glossary Reference") << "doc-glossref" << tr("A reference to a glossary definition.") <<
@@ -206,6 +215,7 @@ void AriaRoles::SetAriaRolesMap()
         tr("Page Header") << "doc-pageheader" << tr("A section of text appearing at the top of a page that provides context about the current work and location within it. The page header is distinct from the body text and normally follows a repeating template that contains (possibly truncated) items such as the document title, current section, author name(s), and page number.") <<
         tr("Page List") << "doc-pagelist" << tr("A navigational aid that provides a list of links to the page breaks in the content.") <<
         tr("Part") << "doc-part" << tr("A major structural division in a work that contains a set of related sections dealing with a particular subject, narrative arc, or similar encapsulated theme.") <<
+        tr("Preamble") << "preamble" << tr("A section at the beginning of a work, typically containing introductory and/or explanatory prose regarding the scope or nature of the work's content. [epub:type ONLY]") <<
         tr("Preface") << "doc-preface" << tr("An introductory section that precedes the work, typically written by the author of the work.") <<
         tr("Prologue") << "doc-prologue" << tr("An introductory section that sets the background to a work, typically part of the narrative.") <<
         tr("Questions and Answers") << "doc-qna" << tr("A section of content structured as a series of questions and answers, such as an interview or list of frequently asked questions.") <<
@@ -239,6 +249,7 @@ void AriaRoles::SetEpubTypeMap()
     m_EpubTypeMap[ "doc-appendix"        ] = "appendix";
     m_EpubTypeMap[ "doc-backlink"        ] = "backlink";
     m_EpubTypeMap[ "doc-bibliography"    ] = "bibliography";
+    m_EpubTypeMap[ "biblioentry"         ] = "biblioentry";   // epub:type ONLY
     m_EpubTypeMap[ "doc-biblioref"       ] = "biblioref";
     m_EpubTypeMap[ "doc-chapter"         ] = "chapter";
     m_EpubTypeMap[ "doc-colophon"        ] = "colophon";
@@ -247,12 +258,14 @@ void AriaRoles::SetEpubTypeMap()
     m_EpubTypeMap[ "doc-credit"          ] = "credit";
     m_EpubTypeMap[ "doc-credits"         ] = "credits";
     m_EpubTypeMap[ "doc-dedication"      ] = "dedication";
+    m_EpubTypeMap[ "endnote"             ] = "endnote";       // epub:type ONLY
     m_EpubTypeMap[ "doc-endnotes"        ] = "endnotes";
     m_EpubTypeMap[ "doc-epigraph"        ] = "epigraph";
     m_EpubTypeMap[ "doc-epilogue"        ] = "epilogue";
     m_EpubTypeMap[ "doc-errata"          ] = "errata";
-    m_EpubTypeMap[ "doc-example"         ] = "";          //no epub:type 
+    m_EpubTypeMap[ "doc-example"         ] = "";              // aria role ONLY 
     m_EpubTypeMap[ "doc-footnote"        ] = "footnote";
+    m_EpubTypeMap[ "footnotes"           ] = "footnotes";     // epub:type ONLY
     m_EpubTypeMap[ "doc-foreword"        ] = "foreword";
     m_EpubTypeMap[ "doc-glossary"        ] = "glossary";
     m_EpubTypeMap[ "doc-glossref"        ] = "glossref";
@@ -263,6 +276,7 @@ void AriaRoles::SetEpubTypeMap()
     m_EpubTypeMap[ "doc-pagebreak"       ] = "pagebreak";
     m_EpubTypeMap[ "doc-pagelist"        ] = "page-list";
     m_EpubTypeMap[ "doc-part"            ] = "part";
+    m_EpubTypeMap[ "preamble"            ] = "preamble";      // epub:type ONLY
     m_EpubTypeMap[ "doc-preface"         ] = "preface";
     m_EpubTypeMap[ "doc-prologue"        ] = "prologue";
     m_EpubTypeMap[ "doc-pullquote"       ] = "pullquote";
@@ -284,6 +298,7 @@ void AriaRoles::SetCodeToRawTitleMap()
     m_CodeToRawTitle[ "doc-appendix"        ] = "Appendix";
     m_CodeToRawTitle[ "doc-backlink"        ] = "Back Link";
     m_CodeToRawTitle[ "doc-bibliography"    ] = "Bibliography";
+    m_CodeToRawTitle[ "biblioentry"         ] = "Bibliography Entry";
     m_CodeToRawTitle[ "doc-biblioref"       ] = "Bibliography Reference";
     m_CodeToRawTitle[ "doc-chapter"         ] = "Chapter";
     m_CodeToRawTitle[ "doc-colophon"        ] = "Colophon";
@@ -292,12 +307,14 @@ void AriaRoles::SetCodeToRawTitleMap()
     m_CodeToRawTitle[ "doc-credit"          ] = "Credit";
     m_CodeToRawTitle[ "doc-credits"         ] = "Credits";
     m_CodeToRawTitle[ "doc-dedication"      ] = "Dedication";
+    m_CodeToRawTitle[ "endnote"             ] = "Endnote";
     m_CodeToRawTitle[ "doc-endnotes"        ] = "Endnotes";
     m_CodeToRawTitle[ "doc-epigraph"        ] = "Epigraph";
     m_CodeToRawTitle[ "doc-epilogue"        ] = "Epilogue";
     m_CodeToRawTitle[ "doc-errata"          ] = "Errata";
     m_CodeToRawTitle[ "doc-example"         ] = "Example";
     m_CodeToRawTitle[ "doc-footnote"        ] = "Footnote";
+    m_CodeToRawTitle[ "footnotes"           ] = "Footnotes";
     m_CodeToRawTitle[ "doc-foreword"        ] = "Foreword";
     m_CodeToRawTitle[ "doc-glossary"        ] = "Glossary";
     m_CodeToRawTitle[ "doc-glossref"        ] = "Glossary Reference";
@@ -310,6 +327,7 @@ void AriaRoles::SetCodeToRawTitleMap()
     m_CodeToRawTitle[ "doc-pageheader"      ] = "Page Header";
     m_CodeToRawTitle[ "doc-pagelist"        ] = "Page List";
     m_CodeToRawTitle[ "doc-part"            ] = "Part";
+    m_CodeToRawTitle[ "preamble"            ] = "Preamble";
     m_CodeToRawTitle[ "doc-preface"         ] = "Preface";
     m_CodeToRawTitle[ "doc-prologue"        ] = "Prologue";
     m_CodeToRawTitle[ "doc-qna"             ] = "Questions and Answers";
@@ -339,6 +357,10 @@ QStringList AriaRoles::AllowedTags(const QString& code)
     if (code == "doc-pagebreak") return BREAK_TAGS;
     if (code == "doc-subtitle") return H1H6_TAGS; 
     if (code == "doc-tip") return SIDE_TAGS;
+    if (code == "biblioentry") return ENTRY_TAGS; // epub:type ONLY
+    if (code == "footnotes") return SECTION_TAGS; // epub:type ONLY
+    if (code == "endnote") return SIDE_TAGS;      // epub:type ONLY
+    if (code == "preamble") return SECTION_TAGS;  // epub:type ONLY
     // all others
     // doc-abstract, doc-acknowledgments, doc-afterword, doc-appendix, doc-bibliography
     // doc-chapter, doc-colophon, doc-conclusion, doc-credit, doc-credits

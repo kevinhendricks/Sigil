@@ -53,9 +53,10 @@ public:
     QString GetDescriptionByName(const QString &name);
     QString GetCode(const QString &name);
     QStringList GetSortedNames();
+    QStringList GetAllCodes();
     bool isAriaRolesCode(const QString &code);
     bool isAriaRolesName(const QString &name);
-    const QHash<QString, DescriptiveInfo> &GetCodeMap();
+    const QHash<QString, DescriptiveInfo>& GetCodeMap();
     QString EpubTypeMapping(const QString &code);
     QStringList AllowedTags(const QString &code);
 

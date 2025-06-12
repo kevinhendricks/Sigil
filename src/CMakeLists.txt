@@ -82,6 +82,8 @@ set( RESOURCE_OBJECT_FILES
 set( DIALOG_FILES
     Dialogs/About.cpp
     Dialogs/About.h
+    Dialogs/AddRoles.cpp
+    Dialogs/AddRoles.h
     Dialogs/AddSemantics.cpp
     Dialogs/AddSemantics.h
     Dialogs/AddMetadata.cpp
@@ -554,6 +556,7 @@ set( UI_FILES
     Form_Files/AutomateEditor.ui
     Form_Files/EmptyLayout.ui
     Form_Files/AddMetadata.ui
+    Form_Files/AddRoles.ui
     Form_Files/AddSemantics.ui
     Form_Files/About.ui
     Form_Files/EditTOC.ui
