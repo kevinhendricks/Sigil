@@ -30,16 +30,16 @@
 #include "Misc/AriaRoles.h"
 
 static const QStringList REF_TAGS          = QStringList() << "a";
-static const QStringList NOTE_TAGS         = QStringList() << "aside" << "header" << "footer" << "p";
+static const QStringList NOTE_TAGS         = QStringList() << "aside" << "header" << "footer" << "div" << "p";
 static const QStringList BREAK_TAGS        = QStringList() << "span" << "hr";
 static const QStringList H1H6_TAGS         = QStringList() << "h1" << "h2" << "h3" << "h4" << "h5" << "h6";
 static const QStringList SECTION_TAGS      = QStringList() << "section" << "div";
-static const QStringList SECTION_SIDE_TAGS = QStringList() << "section" << "div" << "aside";
+static const QStringList SECTION_SIDE_TAGS = QStringList() << "section" << "div" << "aside" << "p";
 static const QStringList SIDE_TAGS         = QStringList() << "aside" << "div" << "p";
 static const QStringList NAV_TAGS          = QStringList() << "section" << "nav" << "div"; 
 static const QStringList CVR_TAGS          = QStringList() << "img";
-static const QStringList ENTRY_TAGS        = QStringList() << "p" << "li" << "dt" << "dd";
-static const QStringList ENTRY_SIDE_TAGS   = QStringList() << "p" << "li" << "dt" << "dd" << "aside";
+static const QStringList ENTRY_TAGS        = QStringList() << "li" << "dt" << "dd" << "div" << "p";
+static const QStringList ENTRY_SIDE_TAGS   = QStringList() << "li" << "dt" << "dd" << "aside" << "div" << "p";
 
 static const QStringList NAV_ROLES          = QStringList() << "doc-index" << "doc-pagelist" << "doc-toc";
 static const QStringList REF_ROLES          = QStringList() << "doc-backlink" << "doc-biblioref" <<
