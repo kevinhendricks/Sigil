@@ -29,17 +29,20 @@
 #include "Misc/UILanguage.h"
 #include "Misc/AriaRoles.h"
 
-static const QStringList REF_TAGS          = QStringList() << "a";
-static const QStringList NOTE_TAGS         = QStringList() << "aside" << "footer";
-static const QStringList BREAK_TAGS        = QStringList() << "span" << "hr";
-static const QStringList H1H6_TAGS         = QStringList() << "h1" << "h2" << "h3" << "h4" << "h5" << "h6";
-static const QStringList SECTION_TAGS      = QStringList() << "section" << "div";
-static const QStringList SECTION_SIDE_TAGS = QStringList() << "section" << "div" << "aside";
-static const QStringList SIDE_TAGS         = QStringList() << "aside";
-static const QStringList NAV_TAGS          = QStringList() << "section" << "div" << "nav";
-static const QStringList CVR_TAGS          = QStringList() << "img";
-static const QStringList ENTRY_TAGS        = QStringList() << "p" << "li" << "dt" << "dd";
-static const QStringList ENTRY_SIDE_TAGS   = QStringList() << "p" << "li" << "dt" << "dd" << "aside";
+static const QStringList ALL_ROLES_TAGS    = QStringList() << "address" << "blockquote" << "cite" <<
+                                                 "code" << "div" << "p" << "pre" << "span";
+
+static const QStringList REF_TAGS          = ALL_ROLES_TAGS + QStringList() << "a";
+static const QStringList NOTE_TAGS         = ALL_ROLES_TAGS + QStringList() << "aside" << "header" << "footer";
+static const QStringList BREAK_TAGS        = ALL_ROLES_TAGS + QStringList() << "span" << "hr";
+static const QStringList H1H6_TAGS         = ALL_ROLES_TAGS + QStringList() << "h1" << "h2" << "h3" << "h4" << "h5" << "h6";
+static const QStringList SECTION_TAGS      = ALL_ROLES_TAGS + QStringList() << "section" << "div";
+static const QStringList SECTION_SIDE_TAGS = ALL_ROLES_TAGS + QStringList() << "section" << "div" << "aside";
+static const QStringList SIDE_TAGS         = ALL_ROLES_TAGS + QStringList() << "aside";
+static const QStringList NAV_TAGS          = ALL_ROLES_TAGS + QStringList() << "section" << "nav" << "div"; 
+static const QStringList CVR_TAGS          = ALL_ROLES_TAGS + QStringList() << "img";
+static const QStringList ENTRY_TAGS        = ALL_ROLES_TAGS + QStringList() << "p" << "li" << "dt" << "dd";
+static const QStringList ENTRY_SIDE_TAGS   = ALL_ROLES_TAGS + QStringList() << "p" << "li" << "dt" << "dd" << "aside";
 
 static const QStringList NAV_ROLES          = QStringList() << "doc-index" << "doc-pagelist" << "doc-toc";
 static const QStringList REF_ROLES          = QStringList() << "doc-backlink" << "doc-biblioref" <<
