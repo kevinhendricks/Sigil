@@ -39,6 +39,7 @@ static const QStringList SIDE_TAGS         = QStringList() << "aside";
 static const QStringList NAV_TAGS          = QStringList() << "section" << "div" << "nav";
 static const QStringList CVR_TAGS          = QStringList() << "img";
 static const QStringList ENTRY_TAGS        = QStringList() << "p" << "li" << "dt" << "dd";
+static const QStringList ENTRY_SIDE_TAGS   = QStringList() << "p" << "li" << "dt" << "dd" << "aside";
 
 static const QStringList NAV_ROLES          = QStringList() << "doc-index" << "doc-pagelist" << "doc-toc";
 static const QStringList REF_ROLES          = QStringList() << "doc-backlink" << "doc-biblioref" <<
@@ -359,10 +360,10 @@ QStringList AriaRoles::AllowedTags(const QString& code)
     if (code == "doc-pagebreak") return BREAK_TAGS;
     if (code == "doc-subtitle") return H1H6_TAGS; 
     if (code == "doc-tip") return SIDE_TAGS;
-    if (code == "biblioentry") return ENTRY_TAGS; // epub:type ONLY
-    if (code == "footnotes") return SECTION_TAGS; // epub:type ONLY
-    if (code == "endnote") return SIDE_TAGS;      // epub:type ONLY
-    if (code == "preamble") return SECTION_TAGS;  // epub:type ONLY
+    if (code == "biblioentry") return ENTRY_TAGS;  // epub:type ONLY
+    if (code == "footnotes") return SECTION_TAGS;  // epub:type ONLY
+    if (code == "endnote") return ENTRY_SIDE_TAGS; // epub:type ONLY
+    if (code == "preamble") return SECTION_TAGS;   // epub:type ONLY
     // all others
     // doc-abstract, doc-acknowledgments, doc-afterword, doc-appendix, doc-bibliography
     // doc-chapter, doc-colophon, doc-conclusion, doc-credit, doc-credits
