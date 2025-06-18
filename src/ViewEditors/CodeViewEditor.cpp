@@ -2605,10 +2605,17 @@ void CodeViewEditor::PasteClipEntryFromName(const QString &name)
 
 bool CodeViewEditor::PasteClipEntry(ClipEditorModel::clipEntry *clip)
 {
-    if (!clip || clip->text.isEmpty()) {
+    if (!clip) {
         return false;
     }
+    return PasteClipText(clip->text);
+}
 
+bool CodeViewEditor::PasteClipText(const QString& cliptext)
+{
+    if (cliptext.isEmpty()) {
+        return false;
+    }
     QTextCursor cursor = textCursor();
     // Convert to plain text or \s won't get newlines
     const QString &document_text = toPlainText();
@@ -2617,7 +2624,7 @@ bool CodeViewEditor::PasteClipEntry(ClipEditorModel::clipEntry *clip)
     if (selected_text.isEmpty()) {
         // Allow users to use the same entry for insert/replace
         // Will not handle complicated regex, but good for tags like <p>\1</p>
-        QString replacement_text = clip->text;
+        QString replacement_text = cliptext;
         replacement_text.remove(QString("\\1"));
         cursor.beginEditBlock();
         cursor.removeSelectedText();
@@ -2633,12 +2640,11 @@ bool CodeViewEditor::PasteClipEntry(ClipEditorModel::clipEntry *clip)
         bool found = FindNext(search_regex, Searchable::Direction_Down, false, false, false);
 
         if (found) {
-            ReplaceSelected(search_regex, clip->text, Searchable::Direction_Down, true);
+            ReplaceSelected(search_regex, cliptext, Searchable::Direction_Down, true);
         }
         cursor.setPosition(cursor.selectionEnd());
         setTextCursor(cursor);
     }
-
     return true;
 }
 

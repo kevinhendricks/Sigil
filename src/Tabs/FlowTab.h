@@ -167,6 +167,7 @@ public:
     bool NumberListChecked();
 
     bool PasteClipNumber(int clip_number);
+    bool PasteClipText(const QString& cliptext);
     bool PasteClipEntries(QList<ClipEditorModel::clipEntry *>clips);
 
     QString GetCaretElementName();

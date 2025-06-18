@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2016-2024 Kevin B Hendricks, Stratford, Ontario, Canada
+**  Copyright (C) 2016-2025 Kevin B Hendricks, Stratford, Ontario, Canada
 **  Copyright (C) 2012      John Schember <john@nachtimwald.com>
 **  Copyright (C) 2012      Dave Heiland
 **  Copyright (C) 2012      Grant Drake
@@ -1152,6 +1152,14 @@ bool FlowTab::PasteClipNumber(int clip_number)
 {
     if (m_wCodeView) {
         return m_wCodeView->PasteClipNumber(clip_number);
+    }
+    return false;
+}
+
+bool FlowTab::PasteClipText(const QString& cliptext)
+{
+    if (m_wCodeView) {
+        return m_wCodeView->PasteClipText(cliptext);
     }
     return false;
 }

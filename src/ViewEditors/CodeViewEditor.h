@@ -393,6 +393,7 @@ public:
     void SetReformatHTMLEnabled(bool value);
 
     bool PasteClipNumber(int clip_number);
+    bool PasteClipText(const QString& cliptext);
 
     void HighlightWord(const QString &word, int pos);
 
