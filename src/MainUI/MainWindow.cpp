@@ -55,6 +55,7 @@
 #include "BookManipulation/Index.h"
 #include "BookManipulation/FolderKeeper.h"
 #include "Dialogs/About.h"
+#include "Dialogs/AddClips.h"
 #include "Dialogs/AddRoles.h"
 #include "Dialogs/ClipEditor.h"
 #include "Dialogs/ClipboardHistorySelector.h"
@@ -3256,6 +3257,31 @@ void MainWindow::InsertId()
 }
 
 
+void MainWindow::InsertClip()
+{
+    SaveTabData();
+    ShowMessageOnStatusBar();
+
+    FlowTab *flow_tab = GetCurrentFlowTab();
+    if (!flow_tab) {
+        Utility::warning(this, tr("Sigil"), tr("You can only insert an aria clips in xhtml files."));
+        return;
+    }
+
+    AddClips addclip(this);
+
+    if (addclip.exec() == QDialog::Accepted) {
+        QStringList clips = addclip.GetSelectedEntries();
+        if (!clips.isEmpty()) {
+            QString new_clip = clips.at(0);
+            if (!flow_tab->PasteClipText(new_clip)) {
+                Utility::warning(this, tr("Sigil"), tr("You inserting an aria clip failed."));
+                return;
+            }
+        }
+    }
+}
+
 void MainWindow::InsertRole()
 {
     SaveTabData();
@@ -4516,6 +4542,7 @@ void MainWindow::SetStateActionsCodeView()
     ui.actionInsertFile->setEnabled(true);
     ui.actionInsertSpecialCharacter->setEnabled(true);
     ui.actionInsertId->setEnabled(true);
+    ui.actionInsertClip->setEnabled(editing_epub3);
     ui.actionInsertRole->setEnabled(editing_epub3);
     ui.actionInsertHyperlink->setEnabled(true);
     ui.actionInsertClosingTag->setEnabled(true);
@@ -4608,6 +4635,7 @@ void MainWindow::SetStateActionsRawView()
     ui.actionInsertFile->setEnabled(false);
     ui.actionInsertSpecialCharacter->setEnabled(true);
     ui.actionInsertId->setEnabled(false);
+    ui.actionInsertClip->setEnabled(false);
     ui.actionInsertRole->setEnabled(false);
     ui.actionInsertHyperlink->setEnabled(false);
     ui.actionInsertClosingTag->setEnabled(false);
@@ -4681,6 +4709,7 @@ void MainWindow::SetStateActionsStaticView()
     ui.actionInsertFile->setEnabled(false);
     ui.actionInsertSpecialCharacter->setEnabled(false);
     ui.actionInsertId->setEnabled(false);
+    ui.actionInsertClip->setEnabled(false);
     ui.actionInsertRole->setEnabled(false);
     ui.actionInsertHyperlink->setEnabled(false);
     ui.actionInsertClosingTag->setEnabled(false);
@@ -6138,6 +6167,7 @@ void MainWindow::ExtendUI()
     sm->registerAction(this, ui.actionPaste, "MainWindow.Paste");
     sm->registerAction(this, ui.actionPasteClipboardHistory, "MainWindow.PasteClipboardHistory");
     sm->registerAction(this, ui.actionInsertId, "MainWindow.InsertId");
+    sm->registerAction(this, ui.actionInsertClip, "MainWindow.InsertClip");
     sm->registerAction(this, ui.actionInsertRole, "MainWindow.InsertRole");
     sm->registerAction(this, ui.actionDeleteLine, "MainWindow.DeleteLine");
     sm->registerAction(this, ui.actionInsertFile, "MainWindow.InsertFile");
@@ -6487,6 +6517,7 @@ void MainWindow::ConnectSignalsToSlots()
     connect(ui.actionInsertFile,      SIGNAL(triggered()), this, SLOT(InsertFileDialog()));
     connect(ui.actionInsertSpecialCharacter, SIGNAL(triggered()), this, SLOT(InsertSpecialCharacter()));
     connect(ui.actionInsertId,        SIGNAL(triggered()),  this,   SLOT(InsertId()));
+    connect(ui.actionInsertClip,      SIGNAL(triggered()),  this,   SLOT(InsertClip()));
     connect(ui.actionInsertRole,      SIGNAL(triggered()),  this,   SLOT(InsertRole()));
     connect(ui.actionInsertHyperlink, SIGNAL(triggered()),  this,   SLOT(InsertHyperlink()));
     connect(ui.actionPreferences,     SIGNAL(triggered()), this, SLOT(PreferencesDialog()));

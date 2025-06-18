@@ -201,6 +201,7 @@
     <addaction name="actionInsertSpecialCharacter"/>
     <addaction name="separator"/>
     <addaction name="actionInsertId"/>
+    <addaction name="actionInsertClip"/>
     <addaction name="actionInsertRole"/>
     <addaction name="actionInsertHyperlink"/>
     <addaction name="separator"/>
@@ -583,6 +584,7 @@
    <addaction name="actionInsertFile"/>
    <addaction name="actionInsertSpecialCharacter"/>
    <addaction name="actionInsertId"/>
+   <addaction name="actionInsertClip"/>
    <addaction name="actionInsertRole"/>
    <addaction name="actionInsertHyperlink"/>
   </widget>
@@ -1385,6 +1387,16 @@
     <string>&lt;p style=&quot;padding-top: 0.5em;&quot; &gt;&lt;b&gt;Insert ID&lt;/b&gt;&lt;/p&gt;
 
 &lt;p style=&quot;margin-left: 0.5em;&quot;&gt;Insert or edit an anchor with an ID name to use as a link target.&lt;/p&gt;</string>
+   </property>
+  </action>
+  <action name="actionInsertClip">
+   <property name="text">
+    <string>Aria Clip...</string>
+   </property>
+   <property name="toolTip">
+    <string>&lt;p style=&quot;padding-top: 0.5em;&quot; &gt;&lt;b&gt;Insert Aria Clip&lt;/b&gt;&lt;/p&gt;
+
+&lt;p style=&quot;margin-left: 0.5em;&quot;&gt;Insert a Aria code clip.&lt;/p&gt;</string>
    </property>
   </action>
   <action name="actionInsertRole">

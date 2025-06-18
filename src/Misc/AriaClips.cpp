@@ -169,7 +169,7 @@ void AriaClips::SetAriaClipsMap()
     data <<
 tr("Section") << "section" << "<section>\n  \\1\n</section>\n" <<
 tr("Aside") << "aside" << "<aside>\n  \\1\n<</aside>\n" <<
-tr("Chapter")<< "chapter" << "<section role=\"doc-chapter\" epub:type=\"chapter\" aria-labelledby=\"heading1\">\n  <h1 id=\"heading1\">CHAPTER_TITLE_HERE</h1>\n  \1\n</section>\n" <<
+tr("Chapter")<< "chapter" << "<section role=\"doc-chapter\" epub:type=\"chapter\" aria-labelledby=\"heading1\">\n  <h1 id=\"heading1\">CHAPTER_TITLE_HERE</h1>\n  \\1\n</section>\n" <<
 tr("Footnotes") << "footnotes" << "<section role=\"doc-footnotes\" epub:type=\"footnotes\">\n  \\1\n</section>\n" <<
 tr("Reference to Footnote") << "fn_ref" << "<a id=\"ref_fn_N_\" href=\"#fn_N_\" epub:type=\"noteref\" role=\"doc-noteref\">[_N_]</a>" <<
 tr("Backlink from Footnote") << "fn_backlink" << "<a href=\"ref_fn_N_\" epub:type=\"backlink\" role=\"doc-backlink\">[_N_]</a>" <<
