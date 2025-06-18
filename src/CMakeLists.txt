@@ -333,6 +333,8 @@ set( EMBEDPYTHON_FILES
 set( MISC_FILES
     Misc/AppEventFilter.cpp
     Misc/AppEventFilter.h
+    Misc/AriaClips.cpp
+    Misc/AriaClips.h
     Misc/AriaRoles.cpp
     Misc/AriaRoles.h
     Misc/AsciiFy.cpp
