@@ -55,6 +55,9 @@
       <property name="text">
        <string>Aria Clips Code Template</string>
       </property>
+      <property name="textFormat">
+        <set>Qt::PlainText</set>
+      </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
       </property>
