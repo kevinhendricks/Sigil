@@ -5816,6 +5816,10 @@ void MainWindow::UpdateUiWithCurrentFile(const QString &fullfilepath, bool just_
     } else {
         setWindowTitle(tr("%1[*] - epub%2 - %3").arg(m_CurrentFileName).arg(epubversion).arg(tr("Sigil")));
     }
+
+    // disable epub3 tools menu on epub2
+    ui.menuEPUB3Tools->setEnabled(epubversion.startsWith("3"));
+
     if (m_CurrentFilePath.isEmpty()) {
         return;
     }
