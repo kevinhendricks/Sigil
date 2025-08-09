@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2021-2024      Kevin B. Hendricks, Stratford Ontario Canada 
+**  Copyright (C) 2021-2025 Kevin B. Hendricks, Stratford Ontario Canada 
 **  Copyright (C) 2011-2012 John Schember <john@nachtimwald.com>
 **  Copyright (C) 2012      Dave Heiland
 **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
@@ -71,14 +71,17 @@ QWidget *MetaEditorItemDelegate::createEditor(QWidget *parent, const QStyleOptio
     return te;
 }
 
-void MetaEditorItemDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void MetaEditorItemDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &inOption, const QModelIndex &index) const
 {
+    // init the option for this specific index.
+    QStyleOptionViewItem option = inOption;
+    initStyleOption(&option, index);
+
     if (QTextEdit *te = qobject_cast<QTextEdit *>(editor)) {
         te->setGeometry(option.rect);
     } else {
-        QStyledItemDelegate::updateEditorGeometry(editor, option, index);
+        QStyledItemDelegate::updateEditorGeometry(editor, inOption, index);
     }
-    
 }
 
 

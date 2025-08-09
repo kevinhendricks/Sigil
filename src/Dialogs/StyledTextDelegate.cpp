@@ -46,13 +46,18 @@ StyledTextDelegate::~StyledTextDelegate()
 {
 }
 
-void StyledTextDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void StyledTextDelegate::paint(QPainter *painter, const QStyleOptionViewItem &inOption, const QModelIndex &index) const
 {
     // use only in desginated columns
     // if (index.column() < COL_START) {
-    //     QStyledItemDelegate::paint(painter, option, index);
+    //     QStyledItemDelegate::paint(painter, inOption, index);
     //     return;
     // }
+
+    // first fill option based on the specific index
+    QStyleOptionViewItem option = inOption;
+    initStyleOption(&option, index);
+
     painter->save();
     painter->setClipRect(QRectF(option.rect));
     painter->translate(option.rect.topLeft());

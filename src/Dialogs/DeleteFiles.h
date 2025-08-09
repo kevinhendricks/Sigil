@@ -1,5 +1,6 @@
 /************************************************************************
 **
+**  Copyright (C) 2015-2025 Kevin B. Hendricks, Stratford Ontario Canada
 **  Copyright (C) 2012 Dave Heiland
 **
 **  This file is part of Sigil.
@@ -28,6 +29,8 @@
 
 #include "ui_DeleteFiles.h"
 
+class WrapWordAnyItemDelegate;
+
 class DeleteFiles: public QDialog
 {
     Q_OBJECT
@@ -45,8 +48,14 @@ public:
 
     QStringList GetFilesToDelete();
 
+public slots:
+    void SizeRowsForContent();
+
 signals:
     void OpenFileRequest(QString, int, int);
+
+protected:
+    void resizeEvent(QResizeEvent *event);
 
 private slots:
     void SaveFilesToDelete();
@@ -65,9 +74,8 @@ private:
 
     QStringList m_FilesToDelete;
 
+    WrapWordAnyItemDelegate * m_WrapWordAnyDelegate;
     Ui::DeleteFiles ui;
 };
 
 #endif // DELETEFILES_H
-
-

@@ -92,6 +92,8 @@ set( DIALOG_FILES
     Dialogs/AddMetadata.h
     Dialogs/ClipboardHistorySelector.h
     Dialogs/ClipboardHistorySelector.cpp
+    Dialogs/WrapWordAnyItemDelegate.cpp
+    Dialogs/WrapWordAnyItemDelegate.h
     Dialogs/DeleteFiles.cpp
     Dialogs/DeleteFiles.h
     Dialogs/DeleteStyles.cpp

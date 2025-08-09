@@ -1,6 +1,6 @@
 /************************************************************************
 **
-**  Copyright (C) 2015-2019 Kevin B. Hendricks, Stratford Ontario Canada
+**  Copyright (C) 2015-2025 Kevin B. Hendricks, Stratford Ontario Canada
 **  Copyright (C) 2012      Dave Heiland
 **
 **  This file is part of Sigil.
@@ -20,8 +20,13 @@
 **
 *************************************************************************/
 
+#include <QTextDocument>
+#include <QTextOption>
+#include <QSize>
+#include <QTimer>
 #include <QtWidgets/QPushButton>
 #include "Misc/SettingsStore.h"
+#include "Dialogs/WrapWordAnyItemDelegate.h"
 #include "Dialogs/DeleteFiles.h"
 
 static const QString SETTINGS_GROUP      = "delete_files";
@@ -30,11 +35,11 @@ static const QString SETTINGS_GROUP      = "delete_files";
 DeleteFiles::DeleteFiles(QStringList files_to_delete, QWidget *parent)
     :
     QDialog(parent),
-    m_FilesToDelete(files_to_delete)
+    m_FilesToDelete(files_to_delete),
+    m_WrapWordAnyDelegate(new WrapWordAnyItemDelegate())
 {
     ui.setupUi(this);
     ConnectSignals();
-    SetUpTable();
     ReadSettings();
     foreach(QString filepath, m_FilesToDelete) {
         QList<QStandardItem *> rowItems;
@@ -47,19 +52,41 @@ DeleteFiles::DeleteFiles(QStringList files_to_delete, QWidget *parent)
         QStandardItem *file_item = new QStandardItem();
         file_item->setText(filepath);
         rowItems << file_item;
-
         for (int i = 0; i < rowItems.count(); i++) {
             rowItems[i]->setEditable(false);
         }
-
         m_Model.appendRow(rowItems);
     }
+    SetUpTable();
+    QTimer::singleShot(100, this, SLOT(SizeRowsForContent()));
+
 }
 
 DeleteFiles::~DeleteFiles()
 {
     WriteSettings();
 }
+
+void DeleteFiles::resizeEvent(QResizeEvent *event)
+{
+    QDialog::resizeEvent(event);
+    SizeRowsForContent();
+}
+
+// To use an ItemDelegate's sizeHint a QTableView must invoke:
+// resizeRowToContents(int row) otherwise it is not used
+// This must also be called every time the user resizes the table manually
+
+// Note resizeRowsToContents() never even looks at the Item Delegate sizeHint
+// and so is pretty worthless
+
+void DeleteFiles::SizeRowsForContent()
+{
+    for (int row = 0; row < m_Model.rowCount(); row++) {
+        ui.Table->resizeRowToContents(row);
+    }
+}
+
 
 void DeleteFiles::SetUpTable()
 {
@@ -70,6 +97,9 @@ void DeleteFiles::SetUpTable()
     header.append(tr("File"));
     m_Model.setHorizontalHeaderLabels(header);
     ui.Table->setModel(&m_Model);
+    ui.Table->setTextElideMode(Qt::ElideNone);
+    ui.Table->setWordWrap(true);
+    ui.Table->setItemDelegateForColumn(1, m_WrapWordAnyDelegate);
     // Make the header fill all the available space
     ui.Table->horizontalHeader()->setStretchLastSection(true);
     ui.Table->verticalHeader()->setVisible(false);
@@ -77,6 +107,7 @@ void DeleteFiles::SetUpTable()
     ui.Table->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui.Table->setSelectionMode(QAbstractItemView::SingleSelection);
     ui.Table->setAlternatingRowColors(true);
+    ui.Table->resizeRowsToContents();
 }
 
 void DeleteFiles::SaveFilesToDelete()
@@ -85,7 +116,7 @@ void DeleteFiles::SaveFilesToDelete()
         bool checked = m_Model.itemFromIndex(m_Model.index(row, 0))->checkState() == Qt::Checked;
 
         if (!checked) {
-            QString filepath  = m_Model.data(m_Model.index(row, 1)).toString();
+            QString filepath = m_Model.data(m_Model.index(row, 1)).toString();
             m_FilesToDelete.removeOne(filepath);
         }
     }
