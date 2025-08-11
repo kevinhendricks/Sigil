@@ -49,19 +49,34 @@ void WrapWordAnyItemDelegate::paint(QPainter *painter, const QStyleOptionViewIte
     // must first init option for this specific index
     QStyleOptionViewItem option = inOption;
     initStyleOption(&option, index);
-    
-    painter->save();
-    // painter->setClipRect(QRectF(option.rect));
-    painter->translate(option.rect.topLeft());
+
+    QStyle *style = option.widget ? option.widget->style() : QApplication::style();
     QTextOption textOption;
     textOption.setWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
+    textOption.setTextDirection(option.direction);
     QTextDocument doc;
     doc.setDefaultTextOption(textOption);
     doc.setPlainText(option.text);
     doc.setTextWidth(option.rect.width());
     doc.setDefaultFont(option.font);
     doc.setDocumentMargin(0);
-    doc.drawContents(painter);
+
+    // Painting item without text (this takes care of painting e.g. the highlighted for selected
+    // or hovered over items in an ItemView)
+    option.text = QString();
+    style->drawControl(QStyle::CE_ItemViewItem, &option, painter, inOption.widget);
+
+    // needed for horizontal or vertically aligned text
+    // to figure out where to render the text in order to follow the requested alignment
+    QRect textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &option);
+    QSize documentSize(doc.size().width(), doc.size().height()); // Convert QSizeF to QSize
+    QRect layoutRect = QStyle::alignedRect(Qt::LayoutDirectionAuto, option.displayAlignment, documentSize, textRect);
+
+    painter->save();
+
+    painter->translate(layoutRect.topLeft());
+    doc.drawContents(painter, textRect.translated(-textRect.topLeft()));
+
     painter->restore();
 }
 
