@@ -478,9 +478,13 @@ static size_t convert_col8_to_col16(size_t line, size_t col, void *uctx)
 {
     CtxData* actx = (CtxData*)(uctx);
     size_t sp8 = 0;
-    if (line > 1) {
-        /* start point is char after the previous new line */ 
-        sp8 = (size_t) (lexbor_array_get_noi(actx->newlines, line - 1)) + 1;
+    size_t sl = line - 1;
+    if (sl > 0) {
+        /* start point is char after the previous new line (sl -1) or 0 */ 
+        sp8 = (size_t) (lexbor_array_get_noi(actx->newlines, sl-1)) + 1;
+    } else {
+        /* start point is char after the previous new line or 0 if first line */ 
+        sp8 = 0;
     }
     size_t col8 = 1;
     size_t col16 = 1;
@@ -500,10 +504,13 @@ static size_t convert_col8_to_col16(size_t line, size_t col, void *uctx)
 static size_t convert_line_col16_to_pos16(size_t line, size_t col16, void *uctx) 
 {
     CtxData* actx = (CtxData*)(uctx);
-    size_t pos16 = col16;
-    if (line > 1) {
-        /* start point is previous new line */ 
-        pos16 += (size_t) (lexbor_array_get_noi(actx->newlines16, line - 1));
+    size_t pos16;
+    /* start point is previous new line  or 0 */
+    size_t sl = line - 1;
+    if (sl > 0) {
+        pos16 = (size_t) (lexbor_array_get_noi(actx->newlines16, sl - 1)) + col16;
+    } else {
+        pos16 = col16 - 1;
     }
     return pos16;
 }
@@ -520,6 +527,7 @@ static void position_from_pos8(const size_t pos, size_t *aline, size_t *acol, si
         sl++;
     }
     line = sl + 1;
+    /* we want position of previous line end or 0 if in the first line */
     if (sl > 0) {
         col = pos - (size_t)(lexbor_array_get_noi(actx->newlines, sl-1));
     } else {

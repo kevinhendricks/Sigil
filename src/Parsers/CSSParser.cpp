@@ -101,7 +101,7 @@ void CSSParser::parse_css(const QString &source)
     atok.data = QString("EOF");
     m_csstokens.append(atok);
         
-#if 1
+#if 0
     // validate csstokens and error messages
     foreach(csstoken atk, m_csstokens) {
         size_t idx = (size_t) atk.type;
