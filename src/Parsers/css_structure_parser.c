@@ -576,7 +576,7 @@ static void position_info(const lxb_css_syntax_token_t * token, void *uctx)
     if ((line16 >= 1) && (col16 >= 1)) {
         dbuf_null(&actx->tkpos);
         char abuf[256];
-        int ol = snprintf(abuf,255,"[line:%5ld col:%4ld]", line16, col16);
+        int ol = snprintf(abuf,255,"[line:%5zu col:%4zu]", line16, col16);
         dbuf_cat(&actx->tkpos, abuf, ol);
         actx->pos = pos16;
         actx->line = line16;
@@ -690,7 +690,7 @@ unsigned int parse_css_structure_with_user_context(const char* data, size_t len,
             size_t pos = err->pos - actx.startptr;
             position_from_pos8(pos, &line16, &col16, &pos16, (void*) &actx);
             char abuf[128];
-            size_t olen = snprintf(abuf, 127, "Tokenizer  Error near: [line:%5ld col:%4ld] > %s\n",
+            size_t olen = snprintf(abuf, 127, "Tokenizer  Error near: [line:%5zu col:%4zu] > %s\n",
                                    line16, col16, errormsg);
             abuf[olen] = '\0';
             add_other_error(abuf, &actx);

@@ -143,6 +143,7 @@ if( UNIX )
         lexbor/ports/posix/lexbor/core/memory.c
         lexbor/ports/posix/lexbor/core/perf.c
     )
+    set( PROJECT_C_FLAGS ${PROJECT_C_FLAGS} "-Wall -Wextra -Wno-unused-parameter -Wno-unused-function" )
 endif()
 
 set( ALL_SOURCES ${SOURCES} ${ADDL_SOURCES} )
