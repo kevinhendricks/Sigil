@@ -147,10 +147,15 @@ endif()
 
 set( ALL_SOURCES ${SOURCES} ${ADDL_SOURCES} )
 
+
 ADD_LIBRARY(${PROJECT_NAME} ${ALL_SOURCES})
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
+)
+
+target_compile_definitions(lexborcss PUBLIC
+    LEXBOR_STATIC
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES COMPILE_FLAGS "${PROJECT_C_FLAGS}")
