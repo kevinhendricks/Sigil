@@ -339,24 +339,6 @@ set( PARSERS_FILES
     Parsers/OPFParser.h
    )
 
-if( UNIX )
-    # Work around gcc's nanny syndrome that assumes that all use of strncpy is
-    # bad just because poorly trained devs have not been using it correctly.
-    # It is needed when buffers have finite size AND the string to be added
-    # MAY or MAY NOT be properly null terminated, as long as you always add
-    # the proper null termination after the concatenation (which is exactly
-    # what our DBuf.h does). This silences those spewed incorrect warnings.
-
-    set_source_files_properties(Parsers/css_structure_parser.c  PROPERTIES
-        COMPILE_OPTIONS "-O2;-Wno-stringop-truncation"
-    )
-
-    set_source_files_properties(Parsers/DBuf.h PROPERTIES
-        COMPILE_OPTIONS "-O2;-Wno-stringop-truncation"
-    )
-
-endif()
-
 set( EMBEDPYTHON_FILES
     EmbedPython/DiffRec.h
     EmbedPython/PyObjectPtr.h

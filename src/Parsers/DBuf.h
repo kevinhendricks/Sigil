@@ -29,14 +29,14 @@ static void dbuf_cat(DBuf *str, const char *text, size_t tl) {
         if (nd == NULL) { fprintf(stderr, "Reallocation failed!\n"); return; }
         str->d = nd; str->c = nc;
     } 
-    strncpy(str->d + str->l, text, tl); str->l += tl; 
+    memcpy(str->d + str->l, text, tl); str->l += tl; 
     str->d[str->l] = '\0';
 }
 
 static char* dbuf_cstr(DBuf* src) {
     char *cstr = (char*)malloc(src->l + 1);
     if (cstr == NULL) { fprintf(stderr, "Allocation failed!\n"); exit(1); }
-    strncpy(cstr, (char*) src->d, src->l);
+    memcpy(cstr, (char*) src->d, src->l);
     cstr[src->l] = '\0';
     return cstr;
 }
