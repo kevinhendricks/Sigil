@@ -965,11 +965,15 @@ QStringList BookBrowser::AddExisting(bool only_multimedia, bool only_images, QSt
                     if (image_resource) {
                         CoverImageSemanticsSet = m_Book->GetOPF()->IsCoverImage(image_resource);
                     }
-                    old_resource->Delete();
-#if 0
-                    m_Book->GetFolderKeeper()->RemoveWithoutUpdatingOPF(old_resource);
-#endif
+                    // try to overwrite the resource file with a write with truncation
+                    // so that no opf changes are ever needed
+                    if (!Utility::OverWriteFileWith(filepath,old_resource->GetFullPath())) {
+                        Utility::DisplayStdErrorDialog(
+                                                       tr("Overwrite of image \"%1\" failed.").arg(old_resource->GetRelativePath()));
+                        continue;
+                    }
                     replacements_made = true;
+                    continue;
                 } catch (ResourceDoesNotExist&) {
                     Utility::DisplayStdErrorDialog(tr("Unable to delete or replace file \"%1\".").arg(filename)
                     );
