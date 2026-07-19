@@ -96,7 +96,6 @@ ClipEditorModel::~ClipEditorModel()
     m_FSWatcher = 0;
 
     if (m_instance) {
-        delete m_instance;
         m_instance = 0;
     }
 }

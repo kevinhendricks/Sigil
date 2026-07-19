@@ -45,7 +45,6 @@ IndexEntries::IndexEntries()
 IndexEntries::~IndexEntries()
 {
     if (m_instance) {
-        delete m_instance;
         m_instance = 0;
     }
 }

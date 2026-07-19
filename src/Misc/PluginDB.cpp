@@ -64,7 +64,6 @@ PluginDB::~PluginDB()
     m_plugins.clear();
 
     if (m_instance) {
-        delete m_instance;
         m_instance = 0;
     }
 }
