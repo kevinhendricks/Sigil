@@ -1524,7 +1524,7 @@ void BookBrowser::MoveSelected()
     }
 
     QString mediatype = resources.first()->GetMediaType();
-    QString group = MediaTypes::instance()->GetGroupFromMediaType(mediatype);
+    QString group = MediaTypes::instance().GetGroupFromMediaType(mediatype);
 
     SelectFolder select_folder(group, m_Book, this);
 
@@ -2022,7 +2022,7 @@ void BookBrowser::AddSemanticCode()
     }
 
     if (version.startsWith('3')) {
-        AddSemantics addmeaning(Landmarks::instance()->GetCodeMap(), current_code, this);
+        AddSemantics addmeaning(Landmarks::instance().GetCodeMap(), current_code, this);
         if (addmeaning.exec() == QDialog::Accepted) {
             codes = addmeaning.GetSelectedEntries();
             if (!codes.isEmpty()) {
@@ -2037,7 +2037,7 @@ void BookBrowser::AddSemanticCode()
             }
         }
     } else {
-        AddSemantics addmeaning(GuideItems::instance()->GetCodeMap(), current_code, this);
+        AddSemantics addmeaning(GuideItems::instance().GetCodeMap(), current_code, this);
         if (addmeaning.exec() == QDialog::Accepted) {
             codes = addmeaning.GetSelectedEntries();
             if (!codes.isEmpty()) {

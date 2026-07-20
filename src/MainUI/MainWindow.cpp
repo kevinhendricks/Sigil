@@ -361,8 +361,7 @@ bool MainWindow::Automate(const QStringList &commands)
 {
     // store away the set of resources selected in BookBrowser at the start
     QList<Resource*> selected_resources = m_BookBrowser->AllSelectedResources();
-    PluginDB *pdb = PluginDB::instance();
-    QHash<QString, Plugin *> plugins = pdb->all_plugins();
+    QHash<QString, Plugin *> plugins = PluginDB::instance().all_plugins();
     QStringList plugin_names = plugins.keys();
     bool has_error = false;
     int countReplaced = -1;
@@ -566,8 +565,6 @@ bool MainWindow::Automate(const QStringList &commands)
 // Actions can be removed
 void MainWindow::loadPluginsMenu()
 {
-    PluginDB *pdb = PluginDB::instance();
-
     m_menuPlugins = ui.menuPlugins;
     m_actionManagePlugins = ui.actionManage_Plugins;
     
@@ -587,7 +584,7 @@ void MainWindow::loadPluginsMenu()
         i++;
     }
 
-    QHash<QString, Plugin *> plugins = pdb->all_plugins();
+    QHash<QString, Plugin *> plugins = PluginDB::instance().all_plugins();
 
     // first set default icons for quick launch plugin buttons
     // Do we need this?  Aren't these set in Form_Files/main.ui
@@ -953,7 +950,7 @@ bool MainWindow::UseStandardFileExtensions()
     foreach(Resource* resource, m_Book->GetFolderKeeper()->GetResourceList()) {
         QString aname = resource->Filename();
         QString mt = resource->GetMediaType();
-        QString ext = MediaTypes::instance()->GetFileExtFromMediaType(mt);
+        QString ext = MediaTypes::instance().GetFileExtFromMediaType(mt);
         if (!ext.isEmpty()) {
             if (!aname.endsWith("." + ext)) {
                 QStringList parts = aname.split('.');
@@ -1035,7 +1032,7 @@ void MainWindow::MoveContentFilesToStdFolders()
     QString MainFolder = m_Book->GetFolderKeeper()->GetFullPathToMainFolder();
     QDir epub_root(MainFolder);
     foreach(Resource* resource, resources) {
-        QString group = MediaTypes::instance()->GetGroupFromMediaType(resource->GetMediaType(), "other");
+        QString group = MediaTypes::instance().GetGroupFromMediaType(resource->GetMediaType(), "other");
         if ((group == "other") || group.isEmpty()) continue;
         QString stdfolder = m_Book->GetFolderKeeper()->GetStdFolderForGroup(group);
         QString filename = resource->Filename();
@@ -2866,7 +2863,7 @@ bool MainWindow::GenerateNCXGuideFromNav()
         Resource* resource = m_Book->GetFolderKeeper()->GetResourceByBookPathNoThrow(parts.at(0));
         if (resource) html_resource = qobject_cast<HTMLResource *>(resource);
         if (html_resource) {
-            QString guide_code =  Landmarks::instance()->GuideLandMapping(parts.at(2));
+            QString guide_code =  Landmarks::instance().GuideLandMapping(parts.at(2));
             if (!guide_code.isEmpty()) {
                 m_Book->GetOPF()->AddGuideSemanticCode(html_resource, guide_code, false, parts.at(1));
             }
@@ -3470,7 +3467,7 @@ void MainWindow::InsertRole()
         QStringList codes = addmeaning.GetSelectedEntries();
         if (!codes.isEmpty()) {
             QString new_code = codes.at(0);
-            QStringList allowed_tags = AriaRoles::instance()->AllowedTags(new_code);
+            QStringList allowed_tags = AriaRoles::instance().AllowedTags(new_code);
             if (!allowed_tags.isEmpty()) {
                 if (!allowed_tags.contains(tagname)) {
                     Utility::warning(this, tr("Sigil"), tr("The selected role cannot be used on this tag."));
@@ -4325,7 +4322,7 @@ bool MainWindow::CreateHTMLTOC()
 
     // Get Primary language from the OPF and use it to Translate "toc" for title
     QString lang = m_Book->GetOPF()->GetPrimaryBookLanguage();
-    QString title = Landmarks::instance()->GetTitle("toc", lang); 
+    QString title = Landmarks::instance().GetTitle("toc", lang); 
     TOCHTMLWriter toc(tocResource->GetRelativePath(), 
                       css_resource->GetRelativePath(),
                       m_TableOfContents->GetRootEntry(),
@@ -5169,7 +5166,7 @@ void MainWindow::UpdateCursorPositionLabel(int line, int column, int codepoint)
 {
     QString name = "";
     if (line > 0 && column > 0) {
-        name = CodepointNames::instance()->GetName(codepoint);
+        name = CodepointNames::instance().GetName(codepoint);
 	QString cp = " (" + QString("U+%1").arg(codepoint, 4, 16, QLatin1Char('0')).toUpper() + ")";
         QString l = QString::number(line);
         QString c = QString::number(column);
@@ -5235,8 +5232,7 @@ bool MainWindow::MendHTML()
 void MainWindow::ClearIgnoredWords()
 {
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    SpellCheck *sc = SpellCheck::instance();
-    sc->clearIgnoredWords();
+    SpellCheck::instance().clearIgnoredWords();
     // Need to reload any tabs to force spelling to be run again in CodeView
     RefreshSpellingHighlighting();
     QApplication::restoreOverrideCursor();
@@ -5592,8 +5588,7 @@ void MainWindow::SetNewBook(QSharedPointer<Book> new_book)
     m_IndexEditor->SetBook(m_Book);
     m_ClipEditor->SetBook(m_Book);
     m_SpellcheckEditor->SetBook(m_Book);
-    SpellCheck *sc = SpellCheck::instance();
-    sc->clearIgnoredWords();
+    SpellCheck::instance().clearIgnoredWords();
     ResetLinkOrStyleBookmark();
     SettingsStore settings;
     settings.setRenameTemplate("");
@@ -5697,7 +5692,7 @@ void MainWindow::CreateNewBook(const QString version, const QStringList &book_pa
         QString filename = bkpath.split("/").last();
         QString extension = filename.split(".").last();
         QString folder = Utility::startingDir(bkpath);
-        QString mt = MediaTypes::instance()->GetMediaTypeFromExtension(extension);
+        QString mt = MediaTypes::instance().GetMediaTypeFromExtension(extension);
         if (filename.endsWith(".opf")) opfbookpath = bkpath;
         if (filename.endsWith(".ncx")) ncxbookpath = bkpath;
         if (filename.endsWith("marker.xhtml")) textdirs << folder;
@@ -6988,8 +6983,7 @@ void MainWindow::ConnectSignalsToSlots()
     connect(m_Reports,       SIGNAL(RPFindTextInTags(QString)), m_FindReplace, SLOT(FindAnyTextInTags(QString)));
 
     // Plugins
-    PluginDB *pdb = PluginDB::instance();
-    connect(pdb, SIGNAL(plugins_changed()), this, SLOT(loadPluginsMenu()));
+    connect(&PluginDB::instance(), SIGNAL(plugins_changed()), this, SLOT(loadPluginsMenu()));
 
 }
 
