@@ -1828,7 +1828,7 @@ void CodeViewEditor::AddClipContextMenu(QMenu *menu)
         menu->addMenu(clips_menu);
     }
 
-    CreateMenuEntries(clips_menu, 0, ClipEditorModel::instance()->invisibleRootItem());
+    CreateMenuEntries(clips_menu, 0, ClipEditorModel::instance().invisibleRootItem());
 
     QAction *saveClipAction = new QAction(tr("Add To Clips") + "...", menu);
 
@@ -1860,7 +1860,7 @@ bool CodeViewEditor::CreateMenuEntries(QMenu *parent_menu, QAction *topAction, Q
         if (!item->data().toBool()) {
             clipAction = new QAction(item->text(), parent_menu);
             connect(clipAction, SIGNAL(triggered()), m_clipMapper, SLOT(map()));
-            m_clipMapper->setMapping(clipAction, ClipEditorModel::instance()->GetFullName(item));
+            m_clipMapper->setMapping(clipAction, ClipEditorModel::instance().GetFullName(item));
 
             if (!topAction) {
                 parent_menu->addAction(clipAction);
@@ -2630,7 +2630,7 @@ void CodeViewEditor::PasteText(const QString &text)
 
 bool CodeViewEditor::PasteClipNumber(int clip_number)
 {
-    ClipEditorModel::clipEntry *clip = ClipEditorModel::instance()->GetEntryFromNumber(clip_number);
+    ClipEditorModel::clipEntry *clip = ClipEditorModel::instance().GetEntryFromNumber(clip_number);
     if (!clip) {
         return false;
     }
@@ -2652,7 +2652,7 @@ bool CodeViewEditor::PasteClipEntries(const QList<ClipEditorModel::clipEntry *> 
 
 void CodeViewEditor::PasteClipEntryFromName(const QString &name)
 {
-    ClipEditorModel::clipEntry *clip = ClipEditorModel::instance()->GetEntryFromName(name);
+    ClipEditorModel::clipEntry *clip = ClipEditorModel::instance().GetEntryFromName(name);
     PasteClipEntry(clip);
 }
 

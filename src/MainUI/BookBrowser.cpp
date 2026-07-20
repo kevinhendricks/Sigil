@@ -120,8 +120,7 @@ BookBrowser::BookBrowser(QWidget *parent)
 BookBrowser::~BookBrowser()
 {
     WriteSettings();
-    KeyboardShortcutManager *sm = KeyboardShortcutManager::instance();
-    sm->removeActionsOf(this);
+    KeyboardShortcutManager::instance().removeActionsOf(this);
 }
 
 void BookBrowser::paintEvent(QPaintEvent *event)
@@ -2192,7 +2191,6 @@ void BookBrowser::SetupTreeView()
 
 void BookBrowser::CreateContextMenuActions()
 {
-    KeyboardShortcutManager *sm = KeyboardShortcutManager::instance();
     m_SelectAll               = new QAction(tr("Select All"),                   this);
     m_AddNewHTML              = new QAction(tr("Add Blank HTML File"),          this);
     m_AddNewCSS               = new QAction(tr("Add Blank Stylesheet"),         this);
@@ -2232,27 +2230,27 @@ void BookBrowser::CreateContextMenuActions()
     m_AdobesObfuscationMethod->setCheckable(true);
     m_IdpfsObfuscationMethod ->setCheckable(true);
     m_CopyHTML->setShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Y));
-    sm->registerAction(this, m_CopyHTML, "MainWindow.BookBrowser.CopyHTML");
+    KeyboardShortcutManager::instance().registerAction(this, m_CopyHTML, "MainWindow.BookBrowser.CopyHTML");
     m_Delete->setShortcut(QKeySequence::Delete);
     m_Merge->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_M));
     m_Merge->setToolTip(tr("Merge with previous file, or merge multiple files into one."));
-    sm->registerAction(this, m_Merge, "MainWindow.BookBrowser.Merge");
+    KeyboardShortcutManager::instance().registerAction(this, m_Merge, "MainWindow.BookBrowser.Merge");
     m_Rename->setShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_R));
     m_Rename->setToolTip(tr("Rename selected file(s)"));
-    sm->registerAction(this, m_Rename, "MainWindow.BookBrowser.Rename");
+    KeyboardShortcutManager::instance().registerAction(this, m_Rename, "MainWindow.BookBrowser.Rename");
     m_RERename->setToolTip(tr("Use Regular Expressions to Rename selected file(s)"));
-    sm->registerAction(this, m_RERename, "MainWindow.BookBrowser.RERename");
+    KeyboardShortcutManager::instance().registerAction(this, m_RERename, "MainWindow.BookBrowser.RERename");
     // m_Move->setShortcut(QKeySequence(Qt::CTRL | Qt::ALT | Qt::Key_R));
     m_Move->setToolTip(tr("Move selected file(s) to a new folder"));
-    sm->registerAction(this, m_Move, "MainWindow.BookBrowser.Move");
+    KeyboardShortcutManager::instance().registerAction(this, m_Move, "MainWindow.BookBrowser.Move");
     m_LinkStylesheets->setToolTip(tr("Link Stylesheets to selected file(s)."));
-    sm->registerAction(this, m_LinkStylesheets, "MainWindow.BookBrowser.LinkStylesheets");
+    KeyboardShortcutManager::instance().registerAction(this, m_LinkStylesheets, "MainWindow.BookBrowser.LinkStylesheets");
     m_LinkJavascripts->setToolTip(tr("Link Javascripts to selected file(s)."));
-    sm->registerAction(this, m_LinkJavascripts, "MainWindow.BookBrowser.LinkJavascripts");
+    KeyboardShortcutManager::instance().registerAction(this, m_LinkJavascripts, "MainWindow.BookBrowser.LinkJavascripts");
     m_AddSemantics->setToolTip(tr("Add Semantics to selected file(s)."));
-    sm->registerAction(this, m_AddSemantics, "MainWindow.BookBrowser.AddSemantics");
+    KeyboardShortcutManager::instance().registerAction(this, m_AddSemantics, "MainWindow.BookBrowser.AddSemantics");
     m_GetInfo->setToolTip(tr("Show Information about selected files."));
-    sm->registerAction(this, m_GetInfo, "MainWindow.BookBrowser.GetInfo");
+    KeyboardShortcutManager::instance().registerAction(this, m_GetInfo, "MainWindow.BookBrowser.GetInfo");
     // Has to be added to the book browser itself as well
     // for the keyboard shortcut to work.
     addAction(m_CopyHTML);

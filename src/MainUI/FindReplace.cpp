@@ -1,6 +1,6 @@
 /***************************************************************************
 **
-**  Copyright (C) 2015-2025 Kevin B. Hendricks, Stratford, Ontario, Canada
+**  Copyright (C) 2015-2026 Kevin B. Hendricks, Stratford, Ontario, Canada
 **  Copyright (C) 2011-2012 John Schember <john@nachtimwald.com>
 **  Copyright (C) 2012      Dave Heiland
 **  Copyright (C) 2009-2011 Strahinja Markovic  <strahinja.markovic@gmail.com>
@@ -1761,7 +1761,7 @@ void FindReplace::LoadSearchByName(const QString &name)
 {
     // callers to SearchEditorModel's GetEntryFromName receive a searchEntry pointer 
     // created by a call to new and must take ownership and so must clean up after themselves
-    SearchEditorModel::searchEntry * search_entry = SearchEditorModel::instance()->GetEntryFromName(name);
+    SearchEditorModel::searchEntry * search_entry = SearchEditorModel::instance().GetEntryFromName(name);
     if (search_entry) {
         LoadSearch(search_entry);
         delete search_entry;
