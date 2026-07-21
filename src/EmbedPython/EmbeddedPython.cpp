@@ -369,7 +369,10 @@ void EmbeddedPython::setupRedirects()
 
     // Automatically import the module into the C layer
     PyObject* my_module = PyImport_ImportModule("redirect_imports");
-
+    if (my_module == NULL) {
+        qDebug() << "redirect re to regex failed\n";
+    }
+    Py_XDECREF(my_module);
     PyGILState_Release(gstate);
     EmbeddedPython::m_mutex.unlock();
 }
